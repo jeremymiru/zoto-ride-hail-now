@@ -4,6 +4,9 @@ import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import RideRequestForm from '@/components/RideRequest/RideRequestForm';
 import MapBox from '@/components/Map/MapBox';
+import DriverDashboard from '@/components/Driver/DriverDashboard';
+import AdminDashboard from '@/components/Admin/AdminDashboard';
+import NotificationCenter from '@/components/Notifications/NotificationCenter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -152,6 +155,24 @@ const Dashboard = () => {
     });
   };
 
+  // Role-based dashboard rendering
+  if (profile?.role === 'driver' || profile?.role === 'boda_boda') {
+    return (
+      <Layout>
+        <DriverDashboard />
+      </Layout>
+    );
+  }
+
+  if (profile?.role === 'admin') {
+    return (
+      <Layout>
+        <AdminDashboard />
+      </Layout>
+    );
+  }
+
+  // Default passenger dashboard
   return (
     <Layout>
       <div className="space-y-6">
@@ -173,10 +194,11 @@ const Dashboard = () => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="request">Request Ride</TabsTrigger>
             <TabsTrigger value="status">My Rides</TabsTrigger>
             <TabsTrigger value="map">Live Map</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
 
           {/* Request Ride Tab */}
@@ -357,6 +379,11 @@ const Dashboard = () => {
                 />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications">
+            <NotificationCenter />
           </TabsContent>
         </Tabs>
       </div>
