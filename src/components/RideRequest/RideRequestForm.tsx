@@ -171,38 +171,48 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Car className="h-5 w-5" />
+      <Card className="card-enhanced">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Car className="h-6 w-6 text-primary" />
+            </div>
             Request a Ride
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Service Type Selection */}
-            <div className="space-y-3">
-              <Label>Service Type</Label>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">Choose Service Type</Label>
+              <div className="grid grid-cols-2 gap-4">
                 <Button
                   type="button"
                   variant={serviceType === 'car' ? 'default' : 'outline'}
-                  className="h-20 flex flex-col gap-2"
+                  className={`h-24 flex flex-col gap-3 transition-bounce ${
+                    serviceType === 'car' ? 'btn-gradient' : 'hover-lift'
+                  }`}
                   onClick={() => setServiceType('car')}
                 >
-                  <Car className="h-6 w-6" />
-                  <span>Car</span>
-                  <Badge variant="secondary" className="text-xs">$2.5/km</Badge>
+                  <Car className="h-8 w-8" />
+                  <div className="text-center">
+                    <div className="font-semibold">Car Service</div>
+                    <Badge variant="secondary" className="text-xs mt-1">UGX 2,500/km</Badge>
+                  </div>
                 </Button>
                 <Button
                   type="button"
                   variant={serviceType === 'motorcycle' ? 'default' : 'outline'}
-                  className="h-20 flex flex-col gap-2"
+                  className={`h-24 flex flex-col gap-3 transition-bounce ${
+                    serviceType === 'motorcycle' ? 'btn-gradient' : 'hover-lift'
+                  }`}
                   onClick={() => setServiceType('motorcycle')}
                 >
-                  <Bike className="h-6 w-6" />
-                  <span>Boda-Boda</span>
-                  <Badge variant="secondary" className="text-xs">$1.5/km</Badge>
+                  <Bike className="h-8 w-8" />
+                  <div className="text-center">
+                    <div className="font-semibold">Boda-Boda</div>
+                    <Badge variant="secondary" className="text-xs mt-1">UGX 1,500/km</Badge>
+                  </div>
                 </Button>
               </div>
             </div>
@@ -282,15 +292,17 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
 
             {/* Estimated Fare */}
             {estimatedFare > 0 && (
-              <Card className="bg-muted/50">
+              <Card className="gradient-card">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4" />
+                    <span className="flex items-center gap-3 text-lg font-medium">
+                      <div className="p-2 rounded-lg bg-accent/10">
+                        <DollarSign className="h-5 w-5 text-accent" />
+                      </div>
                       Estimated Fare
                     </span>
-                    <span className="text-lg font-semibold">
-                      ${estimatedFare.toFixed(2)}
+                    <span className="text-2xl font-bold gradient-primary bg-clip-text text-transparent">
+                      UGX {estimatedFare.toFixed(0)}
                     </span>
                   </div>
                 </CardContent>
@@ -299,10 +311,17 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
 
             <Button 
               type="submit" 
-              className="w-full gradient-primary"
+              className="w-full h-12 text-lg font-semibold btn-gradient"
               disabled={isSubmitting || !pickupLocation || !destinationLocation}
             >
-              {isSubmitting ? 'Creating Request...' : 'Request Ride'}
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></div>
+                  Creating Request...
+                </div>
+              ) : (
+                'Request Ride'
+              )}
             </Button>
           </form>
         </CardContent>
@@ -310,25 +329,30 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
 
       {/* Map for Location Selection */}
       {selectingLocation && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-lg font-semibold">
-              Select {selectingLocation === 'pickup' ? 'Pickup' : 'Destination'} Location
-            </Label>
-            <Button
-              variant="outline"
-              onClick={() => setSelectingLocation(null)}
-            >
-              Cancel
-            </Button>
-          </div>
-          <MapBox
-            onLocationSelect={handleLocationSelect}
-            pickupLocation={pickupLocation || undefined}
-            destinationLocation={destinationLocation || undefined}
-            className="h-[400px]"
-          />
-        </div>
+        <Card className="card-enhanced">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-xl font-bold">
+                  Select {selectingLocation === 'pickup' ? 'Pickup' : 'Destination'} Location
+                </Label>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectingLocation(null)}
+                  className="hover-lift"
+                >
+                  Cancel
+                </Button>
+              </div>
+              <MapBox
+                onLocationSelect={handleLocationSelect}
+                pickupLocation={pickupLocation || undefined}
+                destinationLocation={destinationLocation || undefined}
+                className="h-[450px] rounded-lg shadow-card"
+              />
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
