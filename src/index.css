@@ -189,21 +189,28 @@ All colors MUST be HSL.
   @apply shadow-elevated;
 }
 
+.hover-glow {
+  @apply transition-smooth;
+}
+
 .hover-glow:hover {
-  @apply shadow-glow;
+  box-shadow: 0 0 40px hsl(var(--primary) / 0.15);
 }
 
 /* Button Enhancements */
 .btn-gradient {
-  @apply gradient-primary text-primary-foreground shadow-card hover:shadow-glow transition-smooth;
+  background: var(--gradient-primary);
+  @apply text-primary-foreground shadow-card transition-smooth;
 }
 
 .btn-gradient:hover {
   transform: translateY(-1px);
+  box-shadow: 0 0 40px hsl(var(--primary) / 0.15);
 }
 
 .btn-secondary-gradient {
-  @apply gradient-secondary text-accent-foreground shadow-card hover:shadow-glow transition-smooth;
+  background: var(--gradient-secondary);
+  @apply text-accent-foreground shadow-card transition-smooth;
 }
 
 /* Card Enhancements */
