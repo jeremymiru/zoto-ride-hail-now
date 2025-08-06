@@ -240,11 +240,11 @@ All colors MUST be HSL.
 }
 
 .status-offline {
-  @apply bg-muted-foreground;
+  background: hsl(var(--muted-foreground));
 }
 
 .status-busy {
-  @apply bg-warning;
+  background: hsl(var(--warning));
   box-shadow: 0 0 10px hsl(var(--warning) / 0.5);
 }
 
