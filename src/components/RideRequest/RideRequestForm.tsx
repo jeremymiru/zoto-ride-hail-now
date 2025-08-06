@@ -27,6 +27,7 @@ interface Location {
 const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
   const { user } = useAuth();
   const { latitude, longitude, loading: locationLoading } = useGeolocation();
+  const { findNearbyDrivers } = useDriverMatching();
   
   const [pickupLocation, setPickupLocation] = useState<Location | null>(null);
   const [destinationLocation, setDestinationLocation] = useState<Location | null>(null);
