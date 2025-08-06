@@ -186,7 +186,7 @@ All colors MUST be HSL.
 
 .hover-lift:hover {
   transform: translateY(-2px);
-  @apply shadow-elevated;
+  box-shadow: 0 10px 40px hsl(210 15% 10% / 0.12), 0 4px 12px hsl(210 15% 10% / 0.08);
 }
 
 .hover-glow {
@@ -200,7 +200,8 @@ All colors MUST be HSL.
 /* Button Enhancements */
 .btn-gradient {
   background: var(--gradient-primary);
-  @apply text-primary-foreground shadow-card transition-smooth;
+  @apply text-primary-foreground transition-smooth;
+  box-shadow: 0 4px 20px hsl(210 15% 10% / 0.08), 0 1px 3px hsl(210 15% 10% / 0.1);
 }
 
 .btn-gradient:hover {
@@ -210,16 +211,26 @@ All colors MUST be HSL.
 
 .btn-secondary-gradient {
   background: var(--gradient-secondary);
-  @apply text-accent-foreground shadow-card transition-smooth;
+  @apply text-accent-foreground transition-smooth;
+  box-shadow: 0 4px 20px hsl(210 15% 10% / 0.08), 0 1px 3px hsl(210 15% 10% / 0.1);
 }
 
 /* Card Enhancements */
 .card-enhanced {
-  @apply bg-card border border-border/50 shadow-card hover:shadow-elevated transition-smooth hover-lift;
+  @apply bg-card border border-border/50 transition-smooth;
+  box-shadow: 0 4px 20px hsl(210 15% 10% / 0.08), 0 1px 3px hsl(210 15% 10% / 0.1);
+}
+
+.card-enhanced:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 40px hsl(210 15% 10% / 0.12), 0 4px 12px hsl(210 15% 10% / 0.08);
 }
 
 .card-glass {
-  @apply gradient-card shadow-elevated;
+  background: linear-gradient(145deg, hsl(var(--card)), hsl(var(--card) / 0.8));
+  backdrop-filter: blur(10px);
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: 0 10px 40px hsl(210 15% 10% / 0.12), 0 4px 12px hsl(210 15% 10% / 0.08);
 }
 
 /* Status Indicators */
@@ -289,7 +300,8 @@ All colors MUST be HSL.
 
 /* Map styles */
 .mapboxgl-popup-content {
-  @apply bg-card text-card-foreground border border-border rounded-lg shadow-elevated;
+  @apply bg-card text-card-foreground border border-border rounded-lg;
+  box-shadow: 0 10px 40px hsl(210 15% 10% / 0.12), 0 4px 12px hsl(210 15% 10% / 0.08);
 }
 
 .mapboxgl-popup-tip {
@@ -297,7 +309,8 @@ All colors MUST be HSL.
 }
 
 .mapboxgl-ctrl-group {
-  @apply bg-card border border-border rounded-lg shadow-card;
+  @apply bg-card border border-border rounded-lg;
+  box-shadow: 0 4px 20px hsl(210 15% 10% / 0.08), 0 1px 3px hsl(210 15% 10% / 0.1);
 }
 
 .mapboxgl-ctrl-group button {
