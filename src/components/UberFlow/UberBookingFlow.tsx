@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Car, Bike, Clock, Navigation, Star, User } from 'lucide-react';
+import { MapPin, Car, Bike, Clock, Navigation, Star, User, Building, Home, Coffee, ShoppingBag, Plane, School, RotateCcw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import MapBox from '@/components/Map/MapBox';
@@ -14,6 +14,19 @@ interface Location {
   latitude: number;
   longitude: number;
   address: string;
+  name?: string;
+  type?: 'current' | 'recent' | 'search' | 'home' | 'work';
+}
+
+interface LocationSuggestion {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  type: 'airport' | 'hotel' | 'restaurant' | 'shopping' | 'office' | 'hospital' | 'school' | 'home' | 'current';
+  rating?: number;
+  distance?: string;
 }
 
 interface Driver {
@@ -28,6 +41,7 @@ interface Driver {
 }
 
 type BookingStep = 'location' | 'service' | 'confirmation' | 'searching' | 'matched' | 'tracking';
+type ServiceType = 'car' | 'motorcycle' | 'disposable_driver';
 
 const UberBookingFlow = () => {
   const { user } = useAuth();
@@ -38,10 +52,29 @@ const UberBookingFlow = () => {
   const [destinationLocation, setDestinationLocation] = useState<Location | null>(null);
   const [pickupAddress, setPickupAddress] = useState('');
   const [destinationAddress, setDestinationAddress] = useState('');
-  const [serviceType, setServiceType] = useState<'car' | 'motorcycle'>('car');
+  const [serviceType, setServiceType] = useState<ServiceType>('car');
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [rideId, setRideId] = useState<string | null>(null);
   const [estimatedFare, setEstimatedFare] = useState(0);
+  const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeInput, setActiveInput] = useState<'pickup' | 'destination' | null>(null);
+  const pickupInputRef = useRef<HTMLInputElement>(null);
+  const destinationInputRef = useRef<HTMLInputElement>(null);
+
+  // Mock location suggestions database
+  const mockLocations: LocationSuggestion[] = [
+    { id: '1', name: 'Entebbe Airport', address: 'Entebbe International Airport, Wakiso', latitude: 0.0424, longitude: 32.4435, type: 'airport', rating: 4.5 },
+    { id: '2', name: 'Kampala City Center', address: 'Kampala Road, Central Division, Kampala', latitude: 0.3163, longitude: 32.5822, type: 'office', rating: 4.2 },
+    { id: '3', name: 'Makerere University', address: 'University Road, Kawempe Division, Kampala', latitude: 0.3354, longitude: 32.5666, type: 'school', rating: 4.8 },
+    { id: '4', name: 'Garden City Mall', address: 'Yusuf Lule Road, Nakawa Division, Kampala', latitude: 0.3354, longitude: 32.6133, type: 'shopping', rating: 4.3 },
+    { id: '5', name: 'Mulago Hospital', address: 'Mulago Hill Road, Kawempe Division, Kampala', latitude: 0.3354, longitude: 32.5666, type: 'hospital', rating: 4.0 },
+    { id: '6', name: 'Acacia Mall', address: 'Northern Bypass, Kampala', latitude: 0.3670, longitude: 32.6029, type: 'shopping', rating: 4.4 },
+    { id: '7', name: 'Hotel Africana', address: 'Wampewo Avenue, Kampala', latitude: 0.3354, longitude: 32.5666, type: 'hotel', rating: 4.1 },
+    { id: '8', name: 'Java House', address: 'Kampala Road, Kampala', latitude: 0.3163, longitude: 32.5822, type: 'restaurant', rating: 4.6 },
+    { id: '9', name: 'Nakasero Market', address: 'Nakasero Hill, Kampala', latitude: 0.3354, longitude: 32.5666, type: 'shopping', rating: 3.9 },
+    { id: '10', name: 'National Theatre', address: 'De Winton Road, Kampala', latitude: 0.3163, longitude: 32.5822, type: 'office', rating: 4.2 }
+  ];
 
   // Mock nearby drivers
   const [nearbyDrivers] = useState<Driver[]>([
@@ -79,11 +112,87 @@ const UberBookingFlow = () => {
       setPickupLocation({
         latitude,
         longitude,
-        address: 'Current Location'
+        address: 'Current Location',
+        type: 'current'
       });
       setPickupAddress('Current Location');
     }
   }, [latitude, longitude, pickupLocation]);
+
+  // Smart location search function
+  const searchLocations = (query: string) => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      return;
+    }
+
+    const filtered = mockLocations.filter(location => 
+      location.name.toLowerCase().includes(query.toLowerCase()) ||
+      location.address.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, 5);
+
+    // Add current location if user is searching
+    if (latitude && longitude && query.toLowerCase().includes('current')) {
+      filtered.unshift({
+        id: 'current',
+        name: 'Current Location',
+        address: 'Your current location',
+        latitude,
+        longitude,
+        type: 'current'
+      });
+    }
+
+    setSuggestions(filtered);
+  };
+
+  const handleInputChange = (value: string, type: 'pickup' | 'destination') => {
+    if (type === 'pickup') {
+      setPickupAddress(value);
+    } else {
+      setDestinationAddress(value);
+    }
+    
+    setActiveInput(type);
+    setShowSuggestions(true);
+    searchLocations(value);
+  };
+
+  const handleSuggestionSelect = (suggestion: LocationSuggestion) => {
+    const location: Location = {
+      latitude: suggestion.latitude,
+      longitude: suggestion.longitude,
+      address: suggestion.address,
+      name: suggestion.name,
+      type: suggestion.type as any
+    };
+
+    if (activeInput === 'pickup') {
+      setPickupLocation(location);
+      setPickupAddress(suggestion.name);
+    } else {
+      setDestinationLocation(location);
+      setDestinationAddress(suggestion.name);
+    }
+    
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setActiveInput(null);
+  };
+
+  const getLocationIcon = (type: string) => {
+    switch (type) {
+      case 'airport': return Plane;
+      case 'hotel': return Building;
+      case 'restaurant': return Coffee;
+      case 'shopping': return ShoppingBag;
+      case 'school': return School;
+      case 'hospital': return Building;
+      case 'office': return Building;
+      case 'current': return Navigation;
+      default: return MapPin;
+    }
+  };
 
   const calculateEstimatedFare = () => {
     if (!pickupLocation || !destinationLocation) return 0;
@@ -97,8 +206,8 @@ const UberBookingFlow = () => {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     const distance = R * c;
     
-    const baseFare = serviceType === 'car' ? 5000 : 3000;
-    const perKmRate = serviceType === 'car' ? 2500 : 1500;
+    const baseFare = serviceType === 'car' ? 5000 : serviceType === 'motorcycle' ? 3000 : 8000;
+    const perKmRate = serviceType === 'car' ? 2500 : serviceType === 'motorcycle' ? 1500 : 4000;
     
     return baseFare + (distance * perKmRate);
   };
@@ -194,13 +303,21 @@ const UberBookingFlow = () => {
             <div className="space-y-4">
               <h2 className="text-2xl font-bold">Where to?</h2>
               
-              <div className="space-y-3">
+              <div className="space-y-3 relative">
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                   <div className="w-3 h-3 rounded-full bg-primary"></div>
                   <Input
+                    ref={pickupInputRef}
                     placeholder="Pickup location"
                     value={pickupAddress}
-                    onChange={(e) => setPickupAddress(e.target.value)}
+                    onChange={(e) => handleInputChange(e.target.value, 'pickup')}
+                    onFocus={() => {
+                      setActiveInput('pickup');
+                      if (pickupAddress) {
+                        searchLocations(pickupAddress);
+                        setShowSuggestions(true);
+                      }
+                    }}
                     className="border-none bg-transparent text-lg"
                   />
                 </div>
@@ -208,12 +325,48 @@ const UberBookingFlow = () => {
                 <div className="flex items-center gap-3 p-3 border-2 border-dashed border-muted-foreground/20 rounded-lg">
                   <MapPin className="w-5 h-5 text-muted-foreground" />
                   <Input
+                    ref={destinationInputRef}
                     placeholder="Where to?"
                     value={destinationAddress}
-                    onChange={(e) => setDestinationAddress(e.target.value)}
+                    onChange={(e) => handleInputChange(e.target.value, 'destination')}
+                    onFocus={() => {
+                      setActiveInput('destination');
+                      if (destinationAddress) {
+                        searchLocations(destinationAddress);
+                        setShowSuggestions(true);
+                      }
+                    }}
                     className="border-none bg-transparent text-lg"
                   />
                 </div>
+
+                {/* Location Suggestions Dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-2 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {suggestions.map((suggestion) => {
+                      const IconComponent = getLocationIcon(suggestion.type);
+                      return (
+                        <div
+                          key={suggestion.id}
+                          onClick={() => handleSuggestionSelect(suggestion)}
+                          className="flex items-center gap-3 p-4 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                        >
+                          <IconComponent className="w-5 h-5 text-muted-foreground" />
+                          <div className="flex-1">
+                            <div className="font-medium">{suggestion.name}</div>
+                            <div className="text-sm text-muted-foreground">{suggestion.address}</div>
+                          </div>
+                          {suggestion.rating && (
+                            <div className="flex items-center gap-1 text-sm">
+                              <Star className="w-4 h-4 fill-current text-yellow-500" />
+                              {suggestion.rating}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -267,6 +420,14 @@ const UberBookingFlow = () => {
                     icon: Bike,
                     time: '2-3 min', 
                     price: Math.floor(estimatedFare * 0.6)
+                  },
+                  {
+                    type: 'disposable_driver' as const,
+                    name: 'Disposable Driver',
+                    description: 'We drive your car for you',
+                    icon: RotateCcw,
+                    time: '5-10 min',
+                    price: Math.floor(estimatedFare * 1.6)
                   }
                 ].map((service) => (
                   <Button
@@ -296,7 +457,7 @@ const UberBookingFlow = () => {
                 onClick={() => setCurrentStep('confirmation')}
                 className="w-full h-12 text-lg font-semibold btn-gradient"
               >
-                Choose {serviceType === 'car' ? 'Zoto Car' : 'Zoto Boda'}
+                Choose {serviceType === 'car' ? 'Zoto Car' : serviceType === 'motorcycle' ? 'Zoto Boda' : 'Disposable Driver'}
               </Button>
             </div>
           </CardContent>
@@ -343,10 +504,18 @@ const UberBookingFlow = () => {
 
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    {serviceType === 'car' ? <Car className="h-6 w-6" /> : <Bike className="h-6 w-6" />}
+                    {serviceType === 'car' ? <Car className="h-6 w-6" /> : 
+                     serviceType === 'motorcycle' ? <Bike className="h-6 w-6" /> : 
+                     <RotateCcw className="h-6 w-6" />}
                     <div>
-                      <div className="font-semibold">{serviceType === 'car' ? 'Zoto Car' : 'Zoto Boda'}</div>
-                      <div className="text-sm text-muted-foreground">2-4 min away</div>
+                      <div className="font-semibold">
+                        {serviceType === 'car' ? 'Zoto Car' : 
+                         serviceType === 'motorcycle' ? 'Zoto Boda' : 
+                         'Disposable Driver'}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {serviceType === 'disposable_driver' ? '5-10 min away' : '2-4 min away'}
+                      </div>
                     </div>
                   </div>
                   <div className="text-right">
