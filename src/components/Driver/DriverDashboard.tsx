@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -455,31 +454,96 @@ const DriverDashboard = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="card-enhanced">
               <CardContent className="p-6 text-center">
-                <DollarSign className="h-12 w-12 text-success mx-auto mb-4" />
-                <div className="text-3xl font-bold">{formatCurrencyDisplay(stats.todayEarnings)}</div>
-                <div className="text-muted-foreground">Today's Earnings</div>
-                <div className="text-sm text-success mt-2">{stats.completedToday} trips completed</div>
+                <div className="text-3xl font-bold text-primary mb-2">
+                  {formatCurrencyDisplay(stats.todayEarnings)}
+                </div>
+                <p className="text-muted-foreground">Today's Earnings</p>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {stats.completedToday} trips completed
+                </div>
               </CardContent>
             </Card>
             
             <Card className="card-enhanced">
               <CardContent className="p-6 text-center">
-                <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
-                <div className="text-3xl font-bold">{formatCurrencyDisplay(stats.totalEarnings / Math.max(stats.totalTrips, 1))}</div>
-                <div className="text-muted-foreground">Average Per Trip</div>
-                <div className="text-sm text-muted-foreground mt-2">Based on {stats.totalTrips} trips</div>
+                <div className="text-3xl font-bold text-primary mb-2">
+                  {formatCurrencyDisplay(stats.totalEarnings)}
+                </div>
+                <p className="text-muted-foreground">Total Earnings</p>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {stats.totalTrips} trips completed
+                </div>
               </CardContent>
             </Card>
             
             <Card className="card-enhanced">
               <CardContent className="p-6 text-center">
-                <Calendar className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                <div className="text-3xl font-bold">{formatCurrencyDisplay(stats.totalEarnings * 0.8)}</div>
-                <div className="text-muted-foreground">This Month (Est.)</div>
-                <div className="text-sm text-muted-foreground mt-2">Projected earnings</div>
+                <div className="text-3xl font-bold text-primary mb-2">
+                  {stats.totalTrips > 0 ? formatCurrencyDisplay(stats.totalEarnings / stats.totalTrips) : formatCurrencyDisplay(0)}
+                </div>
+                <p className="text-muted-foreground">Average per Trip</p>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {stats.averageRating.toFixed(1)} ⭐ rating
+                </div>
               </CardContent>
             </Card>
           </div>
+          
+          {/* Recent Earnings List */}
+          <Card className="card-enhanced">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Recent Earnings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recentRides.length === 0 ? (
+                <div className="text-center py-12">
+                  <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-lg font-medium text-muted-foreground">No earnings yet</p>
+                  <p className="text-muted-foreground">Complete trips to start earning</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentRides.map((ride) => (
+                    <div key={ride.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 rounded-lg bg-success/10">
+                          <DollarSign className="h-5 w-5 text-success" />
+                        </div>
+                        <div>
+                          <div className="font-semibold">
+                            Trip on {new Date(ride.end_time).toLocaleDateString()}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(ride.end_time).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })} • {ride.ride_requests?.service_type || 'Car'} Service
+                          </div>
+                          {ride.passenger_rating && (
+                            <div className="flex items-center gap-1 text-sm">
+                              <Star className="h-4 w-4 fill-current text-yellow-500" />
+                              <span>{ride.passenger_rating} stars from passenger</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xl font-bold text-success">
+                          +{formatCurrencyDisplay(ride.actual_fare)}
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          Completed
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Profile Tab */}
