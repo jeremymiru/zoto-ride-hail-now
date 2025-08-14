@@ -207,13 +207,13 @@ const DriverDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
+      {/* Welcome Header - Always show driver's name */}
       <Card className="gradient-primary hover-glow">
         <CardContent className="p-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-white mb-2">
-                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {profile?.full_name || 'Driver'}!
+                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {profile?.full_name || user?.email || 'Driver'}!
               </h1>
               <p className="text-white/90 text-xl">Ready to make some money today?</p>
               <div className="flex items-center gap-4 mt-4">
