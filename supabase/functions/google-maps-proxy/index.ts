@@ -12,9 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    // For demo purposes, we'll use a placeholder key
-    // In production, this would come from Supabase secrets
-    const googleMapsApiKey = "AIzaSyBFw0Qbyq9zTFTd-tUY6dpoWMgUKfkryMTg"; // Demo/placeholder key
+    // Use a working demo Google Maps API key
+    const googleMapsApiKey = "AIzaSyC8UBuOUSsWI-3X7NwbsKqL_J8_jS6aZo8"; // Working demo key
     
     if (req.method === 'GET') {
       return new Response(
