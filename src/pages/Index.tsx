@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,10 +8,11 @@ import { Car, Bike, Shield, Star, MapPin, Clock, Users } from 'lucide-react';
 const Index = () => {
   const { user, loading } = useAuth();
 
-  // If user is authenticated, redirect to dashboard
-  if (user && !loading) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  useEffect(() => {
+    if (user && !loading) {
+      window.location.href = '/dashboard';
+    }
+  }, [user, loading]);
 
   if (loading) {
     return (
