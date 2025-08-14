@@ -1,523 +1,380 @@
-import { useState, useEffect } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useGeolocation } from '@/hooks/useGeolocation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Car, 
   Clock, 
-  MapPin, 
-  Star, 
-  Navigation,
-  Bell,
+  DollarSign, 
+  Star,
+  MapPin,
   Activity,
-  DollarSign,
-  CheckCircle,
-  XCircle,
-  Play,
-  Pause,
-  MapIcon
+  User,
+  Settings,
+  Navigation,
+  TrendingUp,
+  Calendar
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import TripAcceptance from './TripAcceptance';
+import MapBox from '@/components/Map/MapBox';
 
-interface RideRequest {
-  id: string;
-  user_id: string;
-  pickup_address: string;
-  destination_address: string;
-  pickup_latitude: number;
-  pickup_longitude: number;
-  destination_latitude: number;
-  destination_longitude: number;
-  service_type: 'car' | 'motorcycle' | 'bicycle';
-  status: string;
-  estimated_fare: number;
-  created_at: string;
-  notes?: string;
-  profiles: {
-    full_name: string;
-    phone?: string;
-    rating: number;
-  };
+interface DriverStats {
+  totalEarnings: number;
+  totalTrips: number;
+  averageRating: number;
+  todayEarnings: number;
+  activeRides: number;
+  completedToday: number;
 }
 
-interface MyRide {
+interface RecentRide {
   id: string;
-  status: string;
-  pickup_time: string | null;
-  start_time: string | null;
-  end_time: string | null;
-  actual_fare: number | null;
-  passenger_rating: number | null;
-  driver_rating: number | null;
+  actual_fare: number;
+  end_time: string;
+  passenger_rating?: number;
   ride_requests: {
     pickup_address: string;
     destination_address: string;
     service_type: string;
-    profiles: {
-      full_name: string;
-      phone?: string;
-    };
   };
 }
 
 const DriverDashboard = () => {
   const { user, profile } = useAuth();
-  const { latitude, longitude, error: locationError } = useGeolocation({ watch: true });
-  const [isOnline, setIsOnline] = useState(false);
-  const [availableRequests, setAvailableRequests] = useState<RideRequest[]>([]);
-  const [myRides, setMyRides] = useState<MyRide[]>([]);
-  const [stats, setStats] = useState({
-    todayRides: 0,
+  const [activeTab, setActiveTab] = useState('trips');
+  const [stats, setStats] = useState<DriverStats>({
+    totalEarnings: 0,
+    totalTrips: 0,
+    averageRating: 0,
     todayEarnings: 0,
-    weekEarnings: 0,
-    rating: 5.0
+    activeRides: 0,
+    completedToday: 0
   });
+  const [recentRides, setRecentRides] = useState<RecentRide[]>([]);
+  const [isOnline, setIsOnline] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && profile?.role === 'driver') {
-      fetchAvailableRequests();
-      fetchMyRides();
-      fetchStats();
-      
-      // Set up real-time subscriptions
-      const requestsSubscription = supabase
-        .channel('ride_requests_driver')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'ride_requests',
-          filter: 'status=eq.pending'
-        }, () => {
-          fetchAvailableRequests();
-        })
-        .subscribe();
-
-      const ridesSubscription = supabase
-        .channel('my_rides_driver')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'rides',
-          filter: `driver_id=eq.${user.id}`
-        }, () => {
-          fetchMyRides();
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(requestsSubscription);
-        supabase.removeChannel(ridesSubscription);
-      };
+    if (user) {
+      fetchDriverStats();
+      fetchRecentRides();
     }
-  }, [user, profile]);
+  }, [user]);
 
-  useEffect(() => {
-    // Update driver location when online
-    if (isOnline && latitude && longitude && user) {
-      updateDriverLocation();
-    }
-  }, [latitude, longitude, isOnline, user]);
-
-  const updateDriverLocation = async () => {
-    if (!latitude || !longitude) return;
-
+  const fetchDriverStats = async () => {
     try {
-      await supabase
-        .from('locations')
-        .insert({
-          user_id: user!.id,
-          latitude,
-          longitude,
-          accuracy: 10
-        });
-    } catch (error) {
-      console.error('Error updating location:', error);
-    }
-  };
+      // Fetch driver's rides
+      const { data: ridesData, error: ridesError } = await supabase
+        .from('rides')
+        .select('actual_fare, end_time, passenger_rating, status')
+        .eq('driver_id', user!.id);
 
-  const fetchAvailableRequests = async () => {
-    if (!user || !profile) return;
+      if (ridesError) throw ridesError;
 
-    try {
-      // Fetch requests that match driver's service type
-      const serviceType = profile.role === 'driver' ? 'car' : 'motorcycle';
+      const rides = ridesData || [];
+      const completedRides = rides.filter(ride => ride.status === 'completed');
       
-      const { data, error } = await supabase
-        .from('ride_requests')
-        .select(`
-          *,
-          profiles!ride_requests_user_id_fkey (
-            full_name,
-            phone,
-            rating
-          )
-        `)
-        .eq('status', 'pending')
-        .eq('service_type', serviceType)
-        .order('created_at', { ascending: true });
+      // Calculate stats
+      const totalEarnings = completedRides.reduce((sum, ride) => sum + (ride.actual_fare || 0), 0);
+      const totalTrips = completedRides.length;
+      const averageRating = completedRides.length > 0 
+        ? completedRides.reduce((sum, ride) => sum + (ride.passenger_rating || 5), 0) / completedRides.length
+        : 5.0;
+      
+      // Today's stats
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const todayRides = completedRides.filter(ride => 
+        ride.end_time && new Date(ride.end_time) >= today
+      );
+      
+      const todayEarnings = todayRides.reduce((sum, ride) => sum + (ride.actual_fare || 0), 0);
+      const completedToday = todayRides.length;
+      
+      // Active rides
+      const activeRides = rides.filter(ride => 
+        ['waiting', 'picked_up', 'in_progress'].includes(ride.status)
+      ).length;
 
-      if (error) throw error;
-      setAvailableRequests(data || []);
+      setStats({
+        totalEarnings,
+        totalTrips,
+        averageRating,
+        todayEarnings,
+        activeRides,
+        completedToday
+      });
+
     } catch (error: any) {
+      console.error('Failed to fetch driver stats:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch available requests",
+        description: "Failed to load driver statistics",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const fetchMyRides = async () => {
-    if (!user) return;
-
+  const fetchRecentRides = async () => {
     try {
       const { data, error } = await supabase
         .from('rides')
         .select(`
-          *,
+          id,
+          actual_fare,
+          end_time,
+          passenger_rating,
           ride_requests (
             pickup_address,
             destination_address,
-            service_type,
-            profiles!ride_requests_user_id_fkey (
-              full_name,
-              phone
-            )
+            service_type
           )
         `)
-        .eq('driver_id', user.id)
-        .order('created_at', { ascending: false })
+        .eq('driver_id', user!.id)
+        .eq('status', 'completed')
+        .order('end_time', { ascending: false })
         .limit(10);
 
       if (error) throw error;
-      setMyRides(data || []);
+      setRecentRides(data || []);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch your rides",
-        variant: "destructive"
-      });
+      console.error('Failed to fetch recent rides:', error);
     }
   };
 
-  const fetchStats = async () => {
-    if (!user) return;
-
+  const toggleOnlineStatus = async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-
-      const { data: todayRides, error: todayError } = await supabase
-        .from('rides')
-        .select('actual_fare')
-        .eq('driver_id', user.id)
-        .gte('created_at', today)
-        .eq('status', 'completed');
-
-      const { data: weekRides, error: weekError } = await supabase
-        .from('rides')
-        .select('actual_fare')
-        .eq('driver_id', user.id)
-        .gte('created_at', weekAgo)
-        .eq('status', 'completed');
-
-      if (todayError || weekError) throw todayError || weekError;
-
-      setStats({
-        todayRides: todayRides?.length || 0,
-        todayEarnings: todayRides?.reduce((sum, ride) => sum + (ride.actual_fare || 0), 0) || 0,
-        weekEarnings: weekRides?.reduce((sum, ride) => sum + (ride.actual_fare || 0), 0) || 0,
-        rating: profile?.rating || 5.0
-      });
-    } catch (error: any) {
-      console.error('Error fetching stats:', error);
-    }
-  };
-
-  const acceptRequest = async (request: RideRequest) => {
-    try {
-      // Check if we have an active vehicle
-      const { data: vehicles, error: vehicleError } = await supabase
-        .from('vehicles')
-        .select('id')
-        .eq('driver_id', user!.id)
-        .eq('is_active', true)
-        .limit(1);
-
-      if (vehicleError || !vehicles?.length) {
-        toast({
-          title: "No Vehicle",
-          description: "Please register an active vehicle first",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Create ride and update request status
-      const { error: rideError } = await supabase
-        .from('rides')
-        .insert({
-          request_id: request.id,
-          driver_id: user!.id,
-          vehicle_id: vehicles[0].id,
-          status: 'waiting'
-        });
-
-      if (rideError) throw rideError;
-
-      const { error: updateError } = await supabase
-        .from('ride_requests')
-        .update({ status: 'accepted' })
-        .eq('id', request.id);
-
-      if (updateError) throw updateError;
-
-      toast({
-        title: "Request Accepted",
-        description: `You've accepted the ride to ${request.destination_address}`
-      });
-
-      fetchAvailableRequests();
-      fetchMyRides();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to accept request",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const updateRideStatus = async (rideId: string, status: string) => {
-    try {
-      const updates: any = { status };
+      const newStatus = !isOnline;
       
-      if (status === 'pickup') {
-        updates.pickup_time = new Date().toISOString();
-      } else if (status === 'in_progress') {
-        updates.start_time = new Date().toISOString();
-      } else if (status === 'completed') {
-        updates.end_time = new Date().toISOString();
-      }
-
-      const { error } = await supabase
-        .from('rides')
-        .update(updates)
-        .eq('id', rideId);
-
-      if (error) throw error;
-
+      // In a real app, you'd update the driver's online status in the database
+      // For now, we'll just update the local state
+      setIsOnline(newStatus);
+      
       toast({
-        title: "Status Updated",
-        description: `Ride status updated to ${status}`
+        title: newStatus ? "You're Online" : "You're Offline",
+        description: newStatus 
+          ? "You can now receive ride requests" 
+          : "You won't receive new ride requests"
       });
-
-      fetchMyRides();
+      
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to update ride status",
+        description: "Failed to update online status",
         variant: "destructive"
       });
     }
   };
 
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
-
-  const getDistanceToPickup = (request: RideRequest) => {
-    if (!latitude || !longitude) return 'N/A';
-    const distance = calculateDistance(latitude, longitude, request.pickup_latitude, request.pickup_longitude);
-    return `${distance.toFixed(1)} km`;
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'waiting': return 'secondary';
-      case 'pickup': case 'in_progress': return 'default';
-      case 'completed': return 'outline';
-      case 'cancelled': return 'destructive';
-      default: return 'secondary';
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-pulse-glow">
+          <Car className="h-12 w-12 text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Driver Status Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Driver Dashboard</h1>
-          <p className="text-muted-foreground">
-            {isOnline ? 'You are online and ready for rides' : 'You are offline'}
-          </p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm">Offline</span>
-            <Switch checked={isOnline} onCheckedChange={setIsOnline} />
-            <span className="text-sm">Online</span>
+      {/* Welcome Header */}
+      <Card className="gradient-card">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white">
+                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {profile?.full_name || 'Driver'}!
+              </h1>
+              <p className="text-white/80 text-lg">Ready to earn some money today?</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right text-white">
+                <div className="text-2xl font-bold">UGX {stats.todayEarnings.toFixed(0)}</div>
+                <div className="text-white/70 text-sm">Today's Earnings</div>
+              </div>
+              <Button
+                onClick={toggleOnlineStatus}
+                className={`${
+                  isOnline 
+                    ? 'bg-green-500 hover:bg-green-600 text-white' 
+                    : 'bg-white/20 hover:bg-white/30 text-white'
+                }`}
+              >
+                <Activity className={`h-4 w-4 mr-2 ${isOnline ? 'animate-pulse' : ''}`} />
+                {isOnline ? 'Online' : 'Go Online'}
+              </Button>
+            </div>
           </div>
-          <Badge variant={isOnline ? "default" : "secondary"}>
-            {isOnline ? <Activity className="h-3 w-3 mr-1" /> : <Pause className="h-3 w-3 mr-1" />}
-            {isOnline ? 'Online' : 'Offline'}
-          </Badge>
-        </div>
-      </div>
-
-      {locationError && (
-        <Card className="border-destructive">
-          <CardContent className="pt-6">
-            <p className="text-destructive text-sm">
-              Location access required: {locationError}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+        </CardContent>
+      </Card>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="card-enhanced">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Today's Rides</p>
-                <p className="text-2xl font-bold">{stats.todayRides}</p>
+                <p className="text-sm text-muted-foreground">Total Earnings</p>
+                <p className="text-3xl font-bold">UGX {stats.totalEarnings.toFixed(0)}</p>
               </div>
-              <Car className="h-6 w-6 text-muted-foreground" />
+              <DollarSign className="h-8 w-8 text-success" />
+            </div>
+            <div className="flex items-center gap-2 mt-4 text-sm">
+              <TrendingUp className="h-4 w-4 text-success" />
+              <span className="text-success">All time</span>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
+
+        <Card className="card-enhanced">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Today's Earnings</p>
-                <p className="text-2xl font-bold">${stats.todayEarnings.toFixed(0)}</p>
+                <p className="text-sm text-muted-foreground">Total Trips</p>
+                <p className="text-3xl font-bold">{stats.totalTrips}</p>
               </div>
-              <DollarSign className="h-6 w-6 text-muted-foreground" />
+              <Car className="h-8 w-8 text-primary" />
+            </div>
+            <div className="flex items-center gap-2 mt-4 text-sm">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Completed</span>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Week Earnings</p>
-                <p className="text-2xl font-bold">${stats.weekEarnings.toFixed(0)}</p>
-              </div>
-              <DollarSign className="h-6 w-6 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
+
+        <Card className="card-enhanced">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Rating</p>
-                <p className="text-2xl font-bold">{stats.rating.toFixed(1)}</p>
+                <p className="text-3xl font-bold">{stats.averageRating.toFixed(1)}</p>
               </div>
-              <Star className="h-6 w-6 text-muted-foreground" />
+              <Star className="h-8 w-8 text-yellow-500" />
+            </div>
+            <div className="flex items-center gap-2 mt-4 text-sm">
+              <Star className="h-4 w-4 fill-current text-yellow-500" />
+              <span className="text-muted-foreground">Average rating</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="card-enhanced">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Active Rides</p>
+                <p className="text-3xl font-bold">{stats.activeRides}</p>
+              </div>
+              <Activity className="h-8 w-8 text-blue-500" />
+            </div>
+            <div className="flex items-center gap-2 mt-4 text-sm">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">In progress</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="requests" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="requests">Available Requests</TabsTrigger>
-          <TabsTrigger value="rides">My Rides</TabsTrigger>
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="trips" className="flex items-center gap-2">
+            <Navigation className="h-4 w-4" />
+            Available Trips
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            History
+          </TabsTrigger>
+          <TabsTrigger value="earnings" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Earnings
+          </TabsTrigger>
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Profile
+          </TabsTrigger>
         </TabsList>
 
-        {/* Available Requests */}
-        <TabsContent value="requests">
-          <Card>
+        {/* Available Trips Tab */}
+        <TabsContent value="trips">
+          <TripAcceptance />
+        </TabsContent>
+
+        {/* History Tab */}
+        <TabsContent value="history" className="space-y-6">
+          <Card className="card-enhanced">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Available Ride Requests ({availableRequests.length})
+                <Clock className="h-5 w-5" />
+                Recent Trips
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {!isOnline ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">Go online to see available requests</p>
-                </div>
-              ) : availableRequests.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No available requests at the moment</p>
+              {recentRides.length === 0 ? (
+                <div className="text-center py-12">
+                  <Car className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-lg font-medium text-muted-foreground">No trips completed yet</p>
+                  <p className="text-muted-foreground">Start accepting rides to build your history</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {availableRequests.map((request) => (
-                    <div key={request.id} className="border rounded-lg p-4 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">
-                            {request.service_type === 'car' ? <Car className="h-3 w-3 mr-1" /> : <Navigation className="h-3 w-3 mr-1" />}
-                            {request.service_type === 'car' ? 'Car' : 'Boda-Boda'}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {getDistanceToPickup(request)} away
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-lg">${request.estimated_fare.toFixed(2)}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(request.created_at).toLocaleTimeString()}
-                          </p>
-                        </div>
+                  {recentRides.map((ride) => (
+                    <div key={ride.id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="p-2 rounded-lg bg-success/10">
+                        <Car className="h-5 w-5 text-success" />
                       </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-start gap-2">
-                          <MapPin className="h-4 w-4 text-success mt-0.5" />
-                          <div>
-                            <span className="text-sm font-medium">Pickup</span>
-                            <p className="text-sm text-muted-foreground">{request.pickup_address}</p>
+                      
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <div className="font-semibold capitalize">
+                            {ride.ride_requests.service_type} Service
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xl font-bold">UGX {ride.actual_fare.toFixed(0)}</div>
+                            <Badge variant="outline" className="text-xs">
+                              Completed
+                            </Badge>
                           </div>
                         </div>
-                        <div className="flex items-start gap-2">
-                          <MapPin className="h-4 w-4 text-destructive mt-0.5" />
-                          <div>
-                            <span className="text-sm font-medium">Destination</span>
-                            <p className="text-sm text-muted-foreground">{request.destination_address}</p>
+                        
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="w-2 h-2 rounded-full bg-primary"></div>
+                            <span className="truncate">{ride.ride_requests.pickup_address}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="w-4 h-4 text-destructive" />
+                            <span className="truncate">{ride.ride_requests.destination_address}</span>
                           </div>
                         </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Star className="h-4 w-4 text-warning" />
-                          <span className="text-sm">{request.profiles.full_name}</span>
-                          <span className="text-sm text-muted-foreground">
-                            ({request.profiles.rating.toFixed(1)} ⭐)
-                          </span>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            {new Date(ride.end_time).toLocaleDateString()} at {new Date(ride.end_time).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                          
+                          {ride.passenger_rating && (
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 fill-current text-yellow-500" />
+                              <span className="font-medium">{ride.passenger_rating}</span>
+                            </div>
+                          )}
                         </div>
-                        <Button onClick={() => acceptRequest(request)} className="gradient-primary">
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Accept Ride
-                        </Button>
                       </div>
-
-                      {request.notes && (
-                        <div className="bg-muted p-3 rounded">
-                          <p className="text-sm"><strong>Note:</strong> {request.notes}</p>
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -526,83 +383,84 @@ const DriverDashboard = () => {
           </Card>
         </TabsContent>
 
-        {/* My Rides */}
-        <TabsContent value="rides">
-          <Card>
+        {/* Earnings Tab */}
+        <TabsContent value="earnings" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="card-enhanced">
+              <CardContent className="p-6 text-center">
+                <DollarSign className="h-12 w-12 text-success mx-auto mb-4" />
+                <div className="text-3xl font-bold">UGX {stats.todayEarnings.toFixed(0)}</div>
+                <div className="text-muted-foreground">Today's Earnings</div>
+                <div className="text-sm text-success mt-2">{stats.completedToday} trips completed</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="card-enhanced">
+              <CardContent className="p-6 text-center">
+                <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
+                <div className="text-3xl font-bold">UGX {(stats.totalEarnings / Math.max(stats.totalTrips, 1)).toFixed(0)}</div>
+                <div className="text-muted-foreground">Average Per Trip</div>
+                <div className="text-sm text-muted-foreground mt-2">Based on {stats.totalTrips} trips</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="card-enhanced">
+              <CardContent className="p-6 text-center">
+                <Calendar className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+                <div className="text-3xl font-bold">UGX {(stats.totalEarnings * 0.8).toFixed(0)}</div>
+                <div className="text-muted-foreground">This Month (Est.)</div>
+                <div className="text-sm text-muted-foreground mt-2">Projected earnings</div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Profile Tab */}
+        <TabsContent value="profile" className="space-y-6">
+          <Card className="card-enhanced">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                My Rides
+                <User className="h-5 w-5" />
+                Driver Profile
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {myRides.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No rides yet</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {myRides.map((ride) => (
-                    <div key={ride.id} className="border rounded-lg p-4 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Badge variant={getStatusColor(ride.status)} className="capitalize">
-                          {ride.status}
-                        </Badge>
-                        {ride.actual_fare && (
-                          <span className="font-semibold text-lg">${ride.actual_fare.toFixed(2)}</span>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-start gap-2">
-                          <MapPin className="h-4 w-4 text-success mt-0.5" />
-                          <span className="text-sm">{ride.ride_requests.pickup_address}</span>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <MapPin className="h-4 w-4 text-destructive mt-0.5" />
-                          <span className="text-sm">{ride.ride_requests.destination_address}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">
-                          <strong>Passenger:</strong> {ride.ride_requests.profiles.full_name}
-                        </span>
-                        {ride.ride_requests.profiles.phone && (
-                          <span className="text-sm text-muted-foreground">
-                            📞 {ride.ride_requests.profiles.phone}
-                          </span>
-                        )}
-                      </div>
-
-                      {ride.status === 'waiting' && (
-                        <div className="flex gap-2">
-                          <Button onClick={() => updateRideStatus(ride.id, 'pickup')} variant="outline" size="sm">
-                            Arrived at Pickup
-                          </Button>
-                        </div>
-                      )}
-
-                      {ride.status === 'pickup' && (
-                        <div className="flex gap-2">
-                          <Button onClick={() => updateRideStatus(ride.id, 'in_progress')} className="gradient-primary" size="sm">
-                            <Play className="h-4 w-4 mr-2" />
-                            Start Trip
-                          </Button>
-                        </div>
-                      )}
-
-                      {ride.status === 'in_progress' && (
-                        <div className="flex gap-2">
-                          <Button onClick={() => updateRideStatus(ride.id, 'completed')} variant="outline" size="sm">
-                            Complete Trip
-                          </Button>
-                        </div>
-                      )}
+              <div className="space-y-6">
+                <div className="flex items-center gap-4 p-4 border rounded-lg">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">{profile?.full_name || 'Driver'}</h3>
+                    <p className="text-muted-foreground">{profile?.email}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Star className="h-4 w-4 fill-current text-yellow-500" />
+                      <span className="font-medium">{stats.averageRating.toFixed(1)} rating</span>
+                      <Badge variant="outline" className="capitalize">
+                        {profile?.role || 'driver'}
+                      </Badge>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              )}
+
+                <div className="space-y-3">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Car className="h-4 w-4 mr-2" />
+                    Manage Vehicles
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Payment Settings
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    Help & Support
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
