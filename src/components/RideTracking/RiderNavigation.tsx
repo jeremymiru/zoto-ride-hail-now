@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import MapBox from '@/components/Map/MapBox';
+import RealMapBox from '@/components/Map/RealMapBox';
 
 interface ActiveRide {
   id: string;
@@ -374,7 +374,7 @@ const RiderNavigation = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <MapBox
+          <RealMapBox
             pickupLocation={{
               latitude: activeRide.ride_requests.pickup_latitude,
               longitude: activeRide.ride_requests.pickup_longitude,
