@@ -22,7 +22,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import UberBookingFlow from './UberBookingFlow';
-import MapBox from '@/components/Map/MapBox';
+import UberLiveMap from '@/components/Map/UberLiveMap';
 
 interface RideRequest {
   id: string;
@@ -261,10 +261,10 @@ const UberDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <MapBox
-              driverLocations={[
-                { id: '1', latitude: -1.2921, longitude: 36.8219, vehicleType: currentRide.service_type === 'bicycle' ? 'motorcycle' : currentRide.service_type }
-              ]}
+            <UberLiveMap
+              showDrivers={true}
+              trackingMode="rider"
+              rideId={currentRide.id}
               className="h-[400px] rounded-lg"
             />
           </CardContent>
@@ -530,13 +530,9 @@ const UberDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <MapBox
-                driverLocations={[
-                  { id: '1', latitude: -1.2921, longitude: 36.8219, vehicleType: 'car' },
-                  { id: '2', latitude: -1.2951, longitude: 36.8249, vehicleType: 'motorcycle' },
-                  { id: '3', latitude: -1.2891, longitude: 36.8189, vehicleType: 'car' },
-                  { id: '4', latitude: -1.2971, longitude: 36.8279, vehicleType: 'motorcycle' }
-                ]}
+              <UberLiveMap
+                showDrivers={true}
+                trackingMode="rider"
                 className="h-[500px] rounded-lg"
               />
             </CardContent>

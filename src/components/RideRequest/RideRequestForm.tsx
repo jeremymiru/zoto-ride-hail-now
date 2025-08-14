@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Car, Bike, Navigation, DollarSign } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import RealMapBox from '@/components/Map/RealMapBox';
+import UberLiveMap from '@/components/Map/UberLiveMap';
 
 interface RideRequestFormProps {
   onRequestCreated?: () => void;
@@ -80,21 +80,35 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
     return baseFare + (distance * perKmRate);
   };
 
-  const handleLocationSelect = (location: { latitude: number; longitude: number; address?: string }) => {
-    const locationData = {
-      latitude: location.latitude,
-      longitude: location.longitude,
-      address: location.address || `Location (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})`
-    };
+  const handlePickupAddressSet = () => {
+    if (pickupAddress.trim()) {
+      // Use current location if available, otherwise use a default location
+      const location = {
+        latitude: latitude || -1.2921, // Default to Nairobi
+        longitude: longitude || 36.8219,
+        address: pickupAddress
+      };
+      setPickupLocation(location);
+      toast({
+        title: "Pickup Location Set",
+        description: "Pickup address has been set"
+      });
+    }
+  };
 
-    if (selectingLocation === 'pickup') {
-      setPickupLocation(locationData);
-      setPickupAddress(locationData.address);
-      setSelectingLocation(null);
-    } else if (selectingLocation === 'destination') {
-      setDestinationLocation(locationData);
-      setDestinationAddress(locationData.address);
-      setSelectingLocation(null);
+  const handleDestinationAddressSet = () => {
+    if (destinationAddress.trim()) {
+      // Estimate destination coordinates (in real app, would use geocoding)
+      const location = {
+        latitude: (latitude || -1.2921) + 0.01, // Small offset for demo
+        longitude: (longitude || 36.8219) + 0.01,
+        address: destinationAddress
+      };
+      setDestinationLocation(location);
+      toast({
+        title: "Destination Set",
+        description: "Destination address has been set"
+      });
     }
   };
 
@@ -225,6 +239,7 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
                   placeholder="Enter pickup address"
                   value={pickupAddress}
                   onChange={(e) => setPickupAddress(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handlePickupAddressSet()}
                 />
                 <Button
                   type="button"
@@ -238,16 +253,16 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setSelectingLocation('pickup')}
+                  onClick={handlePickupAddressSet}
+                  disabled={!pickupAddress.trim()}
                 >
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Select on Map
+                  Set
                 </Button>
               </div>
               {pickupLocation && (
                 <Badge variant="outline" className="w-fit">
                   <MapPin className="h-3 w-3 mr-1" />
-                  Pickup: {pickupLocation.latitude.toFixed(4)}, {pickupLocation.longitude.toFixed(4)}
+                  Pickup: {pickupLocation.address}
                 </Badge>
               )}
             </div>
@@ -260,20 +275,21 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
                   placeholder="Enter destination address"
                   value={destinationAddress}
                   onChange={(e) => setDestinationAddress(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleDestinationAddressSet()}
                 />
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setSelectingLocation('destination')}
+                  onClick={handleDestinationAddressSet}
+                  disabled={!destinationAddress.trim()}
                 >
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Select on Map
+                  Set
                 </Button>
               </div>
               {destinationLocation && (
                 <Badge variant="outline" className="w-fit">
                   <MapPin className="h-3 w-3 mr-1" />
-                  Destination: {destinationLocation.latitude.toFixed(4)}, {destinationLocation.longitude.toFixed(4)}
+                  Destination: {destinationLocation.address}
                 </Badge>
               )}
             </div>
@@ -327,33 +343,21 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
         </CardContent>
       </Card>
 
-      {/* Map for Location Selection */}
-      {selectingLocation && (
-        <Card className="card-enhanced">
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-xl font-bold">
-                  Select {selectingLocation === 'pickup' ? 'Pickup' : 'Destination'} Location
-                </Label>
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectingLocation(null)}
-                  className="hover-lift"
-                >
-                  Cancel
-                </Button>
-              </div>
-              <RealMapBox
-                onLocationSelect={handleLocationSelect}
-                pickupLocation={pickupLocation || undefined}
-                destinationLocation={destinationLocation || undefined}
-                className="h-[450px] rounded-lg shadow-card"
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Live Map for Nearby Drivers */}
+      <Card className="card-enhanced">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <Label className="text-xl font-bold">
+              Nearby Drivers
+            </Label>
+            <UberLiveMap
+              showDrivers={true}
+              trackingMode="rider"
+              className="h-[450px] rounded-lg shadow-card"
+            />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

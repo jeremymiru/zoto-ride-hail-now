@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Car, Bike, Clock, Navigation, Star, User, Building, Home, Coffee, ShoppingBag, Plane, School, RotateCcw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import RealMapBox from '@/components/Map/RealMapBox';
+import UberLiveMap from '@/components/Map/UberLiveMap';
 
 interface Location {
   latitude: number;
@@ -374,9 +374,9 @@ const UberBookingFlow = () => {
 
         <Card className="card-enhanced">
           <CardContent className="p-4">
-            <RealMapBox
-              onLocationSelect={handleLocationSelect}
-              pickupLocation={pickupLocation || undefined}
+            <UberLiveMap
+              showDrivers={true}
+              trackingMode="rider"
               className="h-[400px] rounded-lg"
             />
           </CardContent>
@@ -714,15 +714,10 @@ const UberBookingFlow = () => {
 
         <Card className="card-enhanced">
           <CardContent className="p-4">
-            <RealMapBox
-              pickupLocation={pickupLocation || undefined}
-              destinationLocation={destinationLocation || undefined}
-              driverLocations={[{
-                id: selectedDriver.id,
-                latitude: (pickupLocation?.latitude || 0) + 0.01,
-                longitude: (pickupLocation?.longitude || 0) + 0.01,
-                vehicleType: selectedDriver.vehicleType
-              }]}
+            <UberLiveMap
+              showDrivers={true}
+              trackingMode="rider"
+              rideId={rideId || undefined}
               className="h-[300px] rounded-lg"
             />
           </CardContent>

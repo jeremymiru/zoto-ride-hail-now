@@ -60,19 +60,21 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
   useEffect(() => {
     const initMap = async () => {
       try {
-        // Get API key from localStorage or show setup
-        const apiKey = localStorage.getItem('google_maps_api_key');
-        if (!apiKey) {
+        // Get API key from edge function
+        const { data: keyData, error: keyError } = await supabase.functions.invoke('google-maps-proxy');
+        
+        if (keyError || !keyData?.apiKey) {
+          console.error('Failed to get Google Maps API key:', keyError);
           toast({
-            title: "Google Maps API Key Required",
-            description: "Please add your Google Maps API key to enable real-time tracking",
+            title: "Maps Unavailable",
+            description: "Unable to load maps at this time",
             variant: "destructive"
           });
           return;
         }
 
         const loader = new Loader({
-          apiKey,
+          apiKey: keyData.apiKey,
           version: 'weekly',
           libraries: ['geometry', 'places']
         });
@@ -219,15 +221,23 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
     }
 
     if (user) {
-      // Update status to offline
+      // Only update status to offline when manually stopped by user
       await supabase
         .from('live_locations')
-        .update({ status: 'offline' })
+        .update({ 
+          status: 'offline',
+          updated_at: new Date().toISOString()
+        })
         .eq('user_id', user.id);
+        
+      toast({
+        title: "You're Now Offline",
+        description: "You won't receive new ride requests until you go online again"
+      });
     }
 
     setIsTracking(false);
-  }, [user]);
+  }, [user, toast]);
 
   // Listen for real-time location updates
   useEffect(() => {
@@ -368,22 +378,16 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
   };
 
   if (!isMapLoaded) {
-    const hasApiKey = localStorage.getItem('google_maps_api_key');
-    
     return (
       <div className={`flex items-center justify-center h-96 bg-muted rounded-lg ${className}`}>
         <div className="text-center space-y-4">
           <div className="animate-pulse-glow">
             <MapPin className="h-12 w-12 text-primary mx-auto" />
           </div>
-          <p className="text-muted-foreground">
-            {hasApiKey ? 'Loading map...' : 'Google Maps API key required'}
+          <p className="text-muted-foreground">Loading maps...</p>
+          <p className="text-sm text-muted-foreground">
+            Initializing real-time tracking
           </p>
-          {!hasApiKey && (
-            <p className="text-sm text-muted-foreground">
-              Please add your Google Maps API key to enable real-time tracking
-            </p>
-          )}
         </div>
       </div>
     );
