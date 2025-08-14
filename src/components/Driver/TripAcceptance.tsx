@@ -58,6 +58,7 @@ const TripAcceptance = () => {
 
   const fetchPendingRequests = async () => {
     try {
+      console.log('Fetching pending requests...', { user: user?.id });
       const { data, error } = await supabase
         .from('ride_requests')
         .select(`
@@ -71,7 +72,10 @@ const TripAcceptance = () => {
         .eq('status', 'pending')
         .order('created_at', { ascending: true });
 
+      console.log('Pending requests query result:', { data, error });
       if (error) throw error;
+      
+      console.log('Setting pending requests:', data?.length || 0, 'requests');
       setPendingRequests(data || []);
     } catch (error: any) {
       console.error('Failed to fetch pending requests:', error);
@@ -190,12 +194,20 @@ const TripAcceptance = () => {
     return distance.toFixed(1);
   };
 
+  console.log('TripAcceptance render state:', { 
+    loading, 
+    pendingRequestsLength: pendingRequests.length, 
+    selectedRequest: !!selectedRequest,
+    user: user?.id 
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-pulse-glow">
           <Car className="h-12 w-12 text-primary" />
         </div>
+        <p className="ml-4 text-muted-foreground">Loading available trips...</p>
       </div>
     );
   }
