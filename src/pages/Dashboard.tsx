@@ -14,16 +14,14 @@ import UberDashboard from '@/components/UberFlow/UberDashboard';
 import PaymentReporting from '@/components/Payment/PaymentReporting';
 import RiderNavigation from '@/components/RideTracking/RiderNavigation';
 import UberLiveMap from '@/components/Map/UberLiveMap';
-import GoogleMapsSetup from '@/components/Map/GoogleMapsSetup';
+// GoogleMapsSetup component removed - now using edge function
 
 type ViewType = 'dashboard' | 'payments' | 'tracking' | 'testing' | 'map';
 
 const Dashboard = () => {
   const { user, profile, loading } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
-  const [hasGoogleMapsKey, setHasGoogleMapsKey] = useState(() => 
-    Boolean(localStorage.getItem('google_maps_api_key'))
-  );
+  // Google Maps API key is now handled by edge function
 
   // Redirect if not authenticated
   if (!loading && !user) {
@@ -95,20 +93,6 @@ const Dashboard = () => {
   );
 
   const renderContent = () => {
-    // Handle Google Maps setup for map view
-    if (currentView === 'map' && !hasGoogleMapsKey) {
-      return (
-        <GoogleMapsSetup 
-          onApiKeySet={(apiKey: string) => {
-            setHasGoogleMapsKey(true);
-            // Force re-render of map component
-            setCurrentView('dashboard');
-            setTimeout(() => setCurrentView('map'), 100);
-          }} 
-        />
-      );
-    }
-
     switch (currentView) {
       case 'payments':
         return <PaymentReporting />;

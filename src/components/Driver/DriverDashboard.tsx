@@ -23,7 +23,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import TripAcceptance from './TripAcceptance';
-import MapBox from '@/components/Map/MapBox';
+import UberLiveMap from '@/components/Map/UberLiveMap';
 
 interface DriverStats {
   totalEarnings: number;
@@ -156,14 +156,32 @@ const DriverDashboard = () => {
     try {
       const newStatus = !isOnline;
       
-      // In a real app, you'd update the driver's online status in the database
-      // For now, we'll just update the local state
+      if (user) {
+        // Update driver's online status in live_locations table
+        const { error } = await supabase
+          .from('live_locations')
+          .upsert({
+            user_id: user.id,
+            latitude: 0, // Will be updated when location tracking starts
+            longitude: 0,
+            user_type: 'driver',
+            vehicle_type: 'car',
+            status: newStatus ? 'online' : 'offline',
+            timestamp: new Date().toISOString()
+          }, { onConflict: 'user_id' });
+
+        if (error) {
+          console.error('Error updating driver status:', error);
+          throw error;
+        }
+      }
+      
       setIsOnline(newStatus);
       
       toast({
         title: newStatus ? "You're Online" : "You're Offline",
         description: newStatus 
-          ? "You can now receive ride requests" 
+          ? "You can now receive ride requests and will stay online until you manually go offline" 
           : "You won't receive new ride requests"
       });
       

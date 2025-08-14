@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import RealMapBox from '@/components/Map/RealMapBox';
+import UberLiveMap from '@/components/Map/UberLiveMap';
 
 interface ActiveRide {
   id: string;
@@ -374,23 +374,10 @@ const RiderNavigation = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <RealMapBox
-            pickupLocation={{
-              latitude: activeRide.ride_requests.pickup_latitude,
-              longitude: activeRide.ride_requests.pickup_longitude,
-              address: activeRide.ride_requests.pickup_address
-            }}
-            destinationLocation={{
-              latitude: activeRide.ride_requests.destination_latitude,
-              longitude: activeRide.ride_requests.destination_longitude,
-              address: activeRide.ride_requests.destination_address
-            }}
-            driverLocations={driverLocation ? [{
-              id: activeRide.id,
-              latitude: driverLocation.latitude,
-              longitude: driverLocation.longitude,
-              vehicleType: activeRide.ride_requests.service_type === 'disposable_driver' ? 'car' : activeRide.ride_requests.service_type as any
-            }] : []}
+          <UberLiveMap
+            showDrivers={true}
+            trackingMode="rider"
+            rideId={activeRide.id}
             className="h-[400px] rounded-lg"
           />
         </CardContent>
