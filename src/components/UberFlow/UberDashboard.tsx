@@ -160,18 +160,34 @@ const UberDashboard = () => {
   if (currentRide) {
     return (
       <div className="space-y-6">
-        {/* Active Ride Header */}
-        <Card className="border-primary bg-primary/5">
-          <CardContent className="p-6">
+        {/* Welcome Header - Always show user's name even during active ride */}
+        <Card className="gradient-primary hover-glow">
+          <CardContent className="p-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold">Current Trip</h1>
-                <p className="text-muted-foreground">Track your ride in real-time</p>
+                <h1 className="text-4xl font-bold text-white mb-2">
+                  Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.user_metadata?.full_name || profile?.full_name || user?.email || 'User'}!
+                </h1>
+                <p className="text-white/90 text-xl">Track your current trip</p>
+                <div className="flex items-center gap-4 mt-4">
+                  <div className="flex items-center gap-2 text-white/80">
+                    <Clock className="h-4 w-4" />
+                    <span>{new Date().toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-white/80">
+                    <Car className="h-4 w-4" />
+                    <span>Trip in progress</span>
+                  </div>
+                </div>
               </div>
-              <Badge className="bg-primary text-primary-foreground">
-                <Activity className="h-4 w-4 mr-2" />
-                {currentRide.status}
-              </Badge>
+              <div className="text-right text-white">
+                <div className="text-3xl font-bold mb-1">{formatCurrencyDisplay(currentRide.estimated_fare)}</div>
+                <div className="text-white/80 text-base">Trip Fare</div>
+                <Badge className="bg-white/20 text-white border-0 mt-2">
+                  <Activity className="h-4 w-4 mr-2" />
+                  {currentRide.status.replace('_', ' ').toUpperCase()}
+                </Badge>
+              </div>
             </div>
           </CardContent>
         </Card>
