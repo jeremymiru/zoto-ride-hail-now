@@ -404,7 +404,7 @@ const DriverDashboard = () => {
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center justify-between">
                           <div className="font-semibold capitalize">
-                            {ride.ride_requests.service_type} Service
+                            {ride.ride_requests?.service_type || 'Car'} Service
                           </div>
                           <div className="text-right">
                             <div className="text-xl font-bold">{formatCurrencyDisplay(ride.actual_fare)}</div>
@@ -417,11 +417,11 @@ const DriverDashboard = () => {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <div className="w-2 h-2 rounded-full bg-primary"></div>
-                            <span className="truncate">{ride.ride_requests.pickup_address}</span>
+                            <span className="truncate">{ride.ride_requests?.pickup_address || 'Pickup location'}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <MapPin className="w-4 h-4 text-destructive" />
-                            <span className="truncate">{ride.ride_requests.destination_address}</span>
+                            <span className="truncate">{ride.ride_requests?.destination_address || 'Destination'}</span>
                           </div>
                         </div>
                         
