@@ -282,7 +282,7 @@ const UberDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-white mb-2">
-                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {profile?.full_name || 'Rider'}!
+                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.user_metadata?.full_name || profile?.full_name || user?.email || 'User'}!
               </h1>
               <p className="text-white/90 text-xl">Where would you like to go today?</p>
               <div className="flex items-center gap-4 mt-4">
