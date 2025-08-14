@@ -63,7 +63,7 @@ const TripAcceptance = () => {
         .from('ride_requests')
         .select(`
           *,
-          profiles!ride_requests_user_id_fkey (
+          profiles (
             full_name,
             phone,
             rating
@@ -73,7 +73,10 @@ const TripAcceptance = () => {
         .order('created_at', { ascending: true });
 
       console.log('Pending requests query result:', { data, error });
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
       
       console.log('Setting pending requests:', data?.length || 0, 'requests');
       setPendingRequests(data || []);
@@ -81,10 +84,11 @@ const TripAcceptance = () => {
       console.error('Failed to fetch pending requests:', error);
       toast({
         title: "Error",
-        description: "Failed to load ride requests",
+        description: `Failed to load ride requests: ${error.message}`,
         variant: "destructive"
       });
     } finally {
+      console.log('Setting loading to false');
       setLoading(false);
     }
   };
