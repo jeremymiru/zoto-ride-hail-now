@@ -24,7 +24,7 @@ import MapBox from '@/components/Map/MapBox';
 
 interface ActiveRide {
   id: string;
-  status: 'waiting' | 'picked_up' | 'in_progress' | 'completed';
+  status: 'waiting' | 'picked_up' | 'in_transit' | 'completed' | 'accepted' | 'cancelled';
   pickup_time?: string;
   start_time?: string;
   end_time?: string;
@@ -95,7 +95,7 @@ const RiderNavigation = () => {
           )
         `)
         .eq('ride_requests.user_id', user!.id)
-        .in('status', ['waiting', 'picked_up', 'in_progress'])
+        .in('status', ['waiting', 'picked_up', 'in_transit'])
         .order('created_at', { ascending: false })
         .limit(1)
         .single();

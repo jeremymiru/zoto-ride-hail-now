@@ -31,7 +31,7 @@ interface RideRequest {
   pickup_longitude: number;
   destination_latitude: number;
   destination_longitude: number;
-  service_type: 'car' | 'motorcycle' | 'disposable_driver';
+  service_type: 'car' | 'motorcycle' | 'bicycle' | 'disposable_driver';
   estimated_fare: number;
   notes?: string;
   created_at: string;
