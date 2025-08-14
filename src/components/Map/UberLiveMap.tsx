@@ -115,7 +115,7 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
                 icon: {
                   path: google.maps.SymbolPath.CIRCLE,
                   scale: 10,
-                  fillColor: '#4285F4',
+                  fillColor: 'hsl(210 100% 50%)', // Using primary color from design system
                   fillOpacity: 1,
                   strokeColor: '#ffffff',
                   strokeWeight: 3,
@@ -308,7 +308,7 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
       icon: {
         url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-            <circle cx="20" cy="20" r="18" fill="#10B981" stroke="#ffffff" stroke-width="3"/>
+            <circle cx="20" cy="20" r="18" fill="hsl(155 60% 50%)" stroke="#ffffff" stroke-width="3"/>
             <text x="20" y="26" text-anchor="middle" font-size="16">${icon}</text>
           </svg>
         `)}`,
@@ -340,7 +340,7 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
     const directionsRenderer = new google.maps.DirectionsRenderer({
       suppressMarkers: true,
       polylineOptions: {
-        strokeColor: '#10B981',
+        strokeColor: 'hsl(155 60% 50%)', // Using accent color from design system
         strokeWeight: 4,
       }
     });
@@ -435,7 +435,7 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
       {/* Status indicator */}
       {isTracking && (
         <div className="absolute top-4 left-4">
-          <Badge variant="default" className="bg-green-500 text-white animate-pulse">
+          <Badge variant="default" className="bg-accent text-accent-foreground animate-pulse">
             Live Tracking Active
           </Badge>
         </div>

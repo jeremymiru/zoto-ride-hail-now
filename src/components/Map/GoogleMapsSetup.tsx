@@ -32,7 +32,7 @@ const GoogleMapsSetup: React.FC<GoogleMapsSetupProps> = ({ onApiKeySet }) => {
       <Card className="w-full max-w-md shadow-elevated">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="gradient-primary p-3 rounded-full">
+            <div className="bg-primary p-3 rounded-full">
               <MapPin className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
