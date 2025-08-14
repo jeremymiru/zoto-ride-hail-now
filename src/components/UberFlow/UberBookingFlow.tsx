@@ -256,7 +256,7 @@ const UberBookingFlow = () => {
           destination_latitude: destinationLocation.latitude,
           destination_longitude: destinationLocation.longitude,
           destination_address: destinationLocation.address,
-          service_type: serviceType,
+          service_type: serviceType === 'disposable_driver' ? 'car' : serviceType as 'car' | 'motorcycle' | 'bicycle',
           estimated_fare: estimatedFare,
           status: 'pending'
         })
