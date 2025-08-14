@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,13 +7,12 @@ import { Car, Bike, Shield, Star, MapPin, Clock, Users } from 'lucide-react';
 
 const Index = () => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (user && !loading) {
-      navigate('/dashboard');
+      window.location.href = '/dashboard';
     }
-  }, [user, loading, navigate]);
+  }, [user, loading]);
 
   if (loading) {
     return (
@@ -48,10 +46,10 @@ const Index = () => {
 
           <div className="flex gap-4 justify-center">
             <Button asChild size="lg" className="gradient-primary">
-              <Link to="/auth">Get Started</Link>
+              <a href="/auth">Get Started</a>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link to="#features">Learn More</Link>
+              <a href="#features">Learn More</a>
             </Button>
           </div>
         </div>
@@ -165,7 +163,7 @@ const Index = () => {
               Join thousands of satisfied users and experience the future of transportation.
             </p>
             <Button asChild size="lg" variant="secondary">
-              <Link to="/auth">Sign Up Now</Link>
+              <a href="/auth">Sign Up Now</a>
             </Button>
           </CardContent>
         </Card>

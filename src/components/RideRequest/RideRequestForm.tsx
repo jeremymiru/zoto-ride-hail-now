@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Car, Bike, Navigation, DollarSign } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import MapBox from '@/components/Map/MapBox';
+import RealMapBox from '@/components/Map/RealMapBox';
 
 interface RideRequestFormProps {
   onRequestCreated?: () => void;
@@ -33,7 +33,7 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
   const [destinationLocation, setDestinationLocation] = useState<Location | null>(null);
   const [pickupAddress, setPickupAddress] = useState('');
   const [destinationAddress, setDestinationAddress] = useState('');
-  const [serviceType, setServiceType] = useState<'car' | 'motorcycle'>('car');
+  const [serviceType, setServiceType] = useState<'car' | 'motorcycle' | 'bicycle'>('car');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectingLocation, setSelectingLocation] = useState<'pickup' | 'destination' | null>(null);
@@ -344,7 +344,7 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
                   Cancel
                 </Button>
               </div>
-              <MapBox
+              <RealMapBox
                 onLocationSelect={handleLocationSelect}
                 pickupLocation={pickupLocation || undefined}
                 destinationLocation={destinationLocation || undefined}

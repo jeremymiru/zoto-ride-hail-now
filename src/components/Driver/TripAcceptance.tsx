@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import MapBox from '@/components/Map/MapBox';
+import RealMapBox from '@/components/Map/RealMapBox';
 
 interface RideRequest {
   id: string;
@@ -347,19 +347,19 @@ const TripAcceptance = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <MapBox
-              pickupLocation={{
-                latitude: selectedRequest.pickup_latitude,
-                longitude: selectedRequest.pickup_longitude,
-                address: selectedRequest.pickup_address
-              }}
-              destinationLocation={{
-                latitude: selectedRequest.destination_latitude,
-                longitude: selectedRequest.destination_longitude,
-                address: selectedRequest.destination_address
-              }}
-              className="h-[400px] rounded-lg"
-            />
+          <RealMapBox
+            pickupLocation={{
+              latitude: selectedRequest.pickup_latitude,
+              longitude: selectedRequest.pickup_longitude,
+              address: selectedRequest.pickup_address
+            }}
+            destinationLocation={{
+              latitude: selectedRequest.destination_latitude,
+              longitude: selectedRequest.destination_longitude,
+              address: selectedRequest.destination_address
+            }}
+            className="h-[400px] rounded-lg"
+          />
           </CardContent>
         </Card>
       </div>
