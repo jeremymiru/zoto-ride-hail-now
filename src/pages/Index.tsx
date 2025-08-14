@@ -163,7 +163,8 @@ const Index = () => {
           <CardContent className="py-12 px-6">
             <h3 className="text-2xl md:text-3xl font-bold mb-4">Ready to Start Your Journey?</h3>
             <p className="text-lg md:text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-              Join thousands of satisfied users and experience the future of transportation.
+              Join thousands of satisfied users and experience real-time tracking like Uber with live GPS, 
+              driver locations, and instant ride matching.
             </p>
             <Button asChild size="lg" variant="secondary" className="hover:scale-105 transition-smooth shadow-card">
               <a href="/auth">Sign Up Now</a>
@@ -180,7 +181,12 @@ const Index = () => {
               <Car className="h-6 w-6 text-primary" />
               <span className="text-lg font-bold">Zoto</span>
             </div>
-            <p className="text-muted-foreground">
+            <div className="text-center flex-1">
+              <p className="text-muted-foreground text-sm">
+                Real-time tracking • Live GPS • Instant matching
+              </p>
+            </div>
+            <p className="text-muted-foreground text-sm">
               © 2024 Zoto. All rights reserved.
             </p>
           </div>

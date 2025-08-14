@@ -8,6 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Navigation, MapPin, Clock, Car, Bike } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
+
 interface LiveLocation {
   id: string;
   user_id: string;
@@ -54,8 +60,19 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
   useEffect(() => {
     const initMap = async () => {
       try {
+        // Get API key from localStorage or show setup
+        const apiKey = localStorage.getItem('google_maps_api_key');
+        if (!apiKey) {
+          toast({
+            title: "Google Maps API Key Required",
+            description: "Please add your Google Maps API key to enable real-time tracking",
+            variant: "destructive"
+          });
+          return;
+        }
+
         const loader = new Loader({
-          apiKey: 'YOUR_GOOGLE_MAPS_API_KEY', // User needs to add this
+          apiKey,
           version: 'weekly',
           libraries: ['geometry', 'places']
         });
@@ -125,7 +142,7 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
         console.error('Error loading Google Maps:', error);
         toast({
           title: "Map Loading Error",
-          description: "Please add your Google Maps API key",
+          description: "Failed to load Google Maps. Please check your API key.",
           variant: "destructive"
         });
       }
@@ -149,16 +166,16 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
     const updateLocation = async (position: GeolocationPosition) => {
       const { latitude, longitude, heading, speed, accuracy } = position.coords;
       
-      const locationData: Partial<LiveLocation> = {
+      const locationData = {
         user_id: user.id,
         latitude,
         longitude,
-        heading: heading || undefined,
-        speed: speed || undefined,
-        accuracy: accuracy || undefined,
+        heading: heading || null,
+        speed: speed || null,
+        accuracy: accuracy || null,
         timestamp: new Date().toISOString(),
         user_type: trackingMode,
-        vehicle_type: profile?.role === 'driver' ? 'car' : undefined,
+        vehicle_type: profile?.role === 'driver' ? 'car' : null,
         status: 'online'
       };
 
@@ -255,18 +272,18 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
       .select('*')
       .eq('user_type', 'driver')
       .eq('status', 'online')
-      .gte('timestamp', new Date(Date.now() - 5 * 60 * 1000).toISOString()); // Last 5 minutes
+      .gte('timestamp', new Date(Date.now() - 5 * 60 * 1000).toISOString());
 
     if (error) {
       console.error('Error loading drivers:', error);
       return;
     }
 
-    setNearbyDrivers(data || []);
+    setNearbyDrivers(data as LiveLocation[] || []);
     
     // Add markers for each driver
     data?.forEach(driver => {
-      updateDriverMarker(driver);
+      updateDriverMarker(driver as LiveLocation);
     });
   };
 
@@ -351,14 +368,22 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
   };
 
   if (!isMapLoaded) {
+    const hasApiKey = localStorage.getItem('google_maps_api_key');
+    
     return (
       <div className={`flex items-center justify-center h-96 bg-muted rounded-lg ${className}`}>
         <div className="text-center space-y-4">
           <div className="animate-pulse-glow">
             <MapPin className="h-12 w-12 text-primary mx-auto" />
           </div>
-          <p className="text-muted-foreground">Loading map...</p>
-          <p className="text-sm text-muted-foreground">Please add your Google Maps API key</p>
+          <p className="text-muted-foreground">
+            {hasApiKey ? 'Loading map...' : 'Google Maps API key required'}
+          </p>
+          {!hasApiKey && (
+            <p className="text-sm text-muted-foreground">
+              Please add your Google Maps API key to enable real-time tracking
+            </p>
+          )}
         </div>
       </div>
     );
