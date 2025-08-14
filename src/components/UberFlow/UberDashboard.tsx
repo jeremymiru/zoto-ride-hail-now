@@ -14,7 +14,10 @@ import {
   DollarSign,
   Navigation,
   User,
-  History
+  History,
+  TrendingUp,
+  Shield,
+  CreditCard
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -273,19 +276,36 @@ const UberDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <Card className="gradient-card">
-        <CardContent className="p-6">
+      <Card className="gradient-primary hover-glow">
+        <CardContent className="p-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">Good morning, {profile?.full_name || 'User'}!</h1>
-              <p className="text-white/80 text-lg">Where would you like to go today?</p>
+              <h1 className="text-4xl font-bold text-white mb-2">
+                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {profile?.full_name || 'Rider'}!
+              </h1>
+              <p className="text-white/90 text-xl">Where would you like to go today?</p>
+              <div className="flex items-center gap-4 mt-4">
+                <div className="flex items-center gap-2 text-white/80">
+                  <Clock className="h-4 w-4" />
+                  <span>{new Date().toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <MapPin className="h-4 w-4" />
+                  <span>Kampala, Uganda</span>
+                </div>
+              </div>
             </div>
             <div className="text-right">
-              <div className="flex items-center gap-2 text-white/90">
-                <Star className="h-5 w-5 fill-current" />
-                <span className="text-xl font-bold">{profile?.rating?.toFixed(1) || '5.0'}</span>
+              <div className="bg-white/20 rounded-2xl p-4 backdrop-blur-sm">
+                <div className="flex items-center gap-3 text-white mb-2">
+                  <Star className="h-6 w-6 fill-current" />
+                  <span className="text-2xl font-bold">{profile?.rating?.toFixed(1) || '5.0'}</span>
+                </div>
+                <div className="text-white/80 text-sm">Your Rating</div>
+                <div className="text-white/70 text-xs mt-1">
+                  {(profile?.total_rides || 0)} total trips
+                </div>
               </div>
-              <div className="text-white/70 text-sm">Your Rating</div>
             </div>
           </div>
         </CardContent>
@@ -320,39 +340,74 @@ const UberDashboard = () => {
         {/* Activity Tab */}
         <TabsContent value="activity" className="space-y-6">
           {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="card-enhanced">
+          <div className="grid gap-6 md:grid-cols-3">
+            <Card className="card-enhanced hover-lift gradient-secondary border-0">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Trips</p>
-                    <p className="text-3xl font-bold">{profile?.total_rides || 0}</p>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-white/10">
+                    <Car className="h-6 w-6 text-white" />
                   </div>
-                  <Car className="h-8 w-8 text-primary" />
+                  <div className="text-right">
+                    <p className="text-sm text-white/80">Total Trips</p>
+                    <p className="text-2xl font-bold text-white">{profile?.total_rides || 0}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-white/70">
+                    <Navigation className="h-4 w-4" />
+                    <span>Completed</span>
+                  </div>
+                  <Badge className="bg-white/20 text-white border-0">
+                    {rideRequests.filter(r => r.status === 'completed').length} recent
+                  </Badge>
                 </div>
               </CardContent>
             </Card>
-            <Card className="card-enhanced">
+            
+            <Card className="card-enhanced hover-lift">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-yellow-100 dark:bg-yellow-900">
+                    <Star className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                  <div className="text-right">
                     <p className="text-sm text-muted-foreground">Rating</p>
-                    <p className="text-3xl font-bold">{profile?.rating?.toFixed(1) || '5.0'}</p>
+                    <p className="text-2xl font-bold">{profile?.rating?.toFixed(1) || '5.0'}</p>
                   </div>
-                  <Star className="h-8 w-8 text-yellow-500" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Star className="h-4 w-4 fill-current text-yellow-500" />
+                    <span>Your rating</span>
+                  </div>
+                  <Badge variant="outline" className="text-yellow-600 border-yellow-200">
+                    {(profile?.rating || 5) >= 4.5 ? 'Excellent' : (profile?.rating || 5) >= 4.0 ? 'Good' : 'Improving'}
+                  </Badge>
                 </div>
               </CardContent>
             </Card>
-            <Card className="card-enhanced">
+            
+            <Card className="card-enhanced hover-lift gradient-card border-0">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Spent</p>
-                    <p className="text-3xl font-bold">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-white/10">
+                    <DollarSign className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-white/80">Total Spent</p>
+                    <p className="text-2xl font-bold text-white">
                       UGX {rides.reduce((sum, ride) => sum + (ride.actual_fare || 0), 0).toFixed(0)}
                     </p>
                   </div>
-                  <DollarSign className="h-8 w-8 text-success" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-white/70">
+                    <TrendingUp className="h-4 w-4" />
+                    <span>All time</span>
+                  </div>
+                  <Badge className="bg-white/20 text-white border-0">
+                    {rides.length > 0 ? `${(rides.reduce((sum, ride) => sum + (ride.actual_fare || 0), 0) / rides.length).toFixed(0)} avg` : 'No trips'}
+                  </Badge>
                 </div>
               </CardContent>
             </Card>

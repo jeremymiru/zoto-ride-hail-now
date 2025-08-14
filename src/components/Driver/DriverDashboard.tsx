@@ -16,7 +16,9 @@ import {
   Settings,
   Navigation,
   TrendingUp,
-  Calendar
+  Calendar,
+  Shield,
+  CreditCard
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -187,30 +189,48 @@ const DriverDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <Card className="gradient-card">
-        <CardContent className="p-6">
+      <Card className="gradient-primary hover-glow">
+        <CardContent className="p-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">
+              <h1 className="text-4xl font-bold text-white mb-2">
                 Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {profile?.full_name || 'Driver'}!
               </h1>
-              <p className="text-white/80 text-lg">Ready to earn some money today?</p>
+              <p className="text-white/90 text-xl">Ready to make some money today?</p>
+              <div className="flex items-center gap-4 mt-4">
+                <div className="flex items-center gap-2 text-white/80">
+                  <Clock className="h-4 w-4" />
+                  <span>{new Date().toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <Car className="h-4 w-4" />
+                  <span>{stats.completedToday} trips today</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <div className="text-right text-white">
-                <div className="text-2xl font-bold">UGX {stats.todayEarnings.toFixed(0)}</div>
-                <div className="text-white/70 text-sm">Today's Earnings</div>
+                <div className="text-3xl font-bold mb-1">UGX {stats.todayEarnings.toFixed(0)}</div>
+                <div className="text-white/80 text-base">Today's Earnings</div>
+                <div className="text-white/70 text-sm mt-1">
+                  {stats.todayEarnings > 0 ? `+${((stats.todayEarnings / (stats.totalEarnings || 1)) * 100).toFixed(0)}% vs avg` : 'Start earning!'}
+                </div>
               </div>
               <Button
                 onClick={toggleOnlineStatus}
-                className={`${
+                size="lg"
+                className={`transition-all duration-300 ${
                   isOnline 
-                    ? 'bg-green-500 hover:bg-green-600 text-white' 
-                    : 'bg-white/20 hover:bg-white/30 text-white'
+                    ? 'bg-white/20 hover:bg-white/30 text-white border-2 border-white/30 shadow-glow' 
+                    : 'bg-white/10 hover:bg-white/20 text-white/70 border-2 border-white/20'
                 }`}
+                variant="outline"
               >
-                <Activity className={`h-4 w-4 mr-2 ${isOnline ? 'animate-pulse' : ''}`} />
-                {isOnline ? 'Online' : 'Go Online'}
+                <Activity className={`h-5 w-5 mr-3 ${isOnline ? 'animate-pulse' : ''}`} />
+                <div className="flex flex-col items-start">
+                  <span className="font-bold">{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
+                  <span className="text-xs opacity-80">{isOnline ? 'Receiving requests' : 'Tap to go online'}</span>
+                </div>
               </Button>
             </div>
           </div>
@@ -218,67 +238,95 @@ const DriverDashboard = () => {
       </Card>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="card-enhanced">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="card-enhanced hover-lift gradient-card border-0">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Earnings</p>
-                <p className="text-3xl font-bold">UGX {stats.totalEarnings.toFixed(0)}</p>
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 rounded-xl bg-white/10">
+                <DollarSign className="h-6 w-6 text-white" />
               </div>
-              <DollarSign className="h-8 w-8 text-success" />
+              <div className="text-right">
+                <p className="text-sm text-white/80">Total Earnings</p>
+                <p className="text-2xl font-bold text-white">UGX {stats.totalEarnings.toFixed(0)}</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2 mt-4 text-sm">
-              <TrendingUp className="h-4 w-4 text-success" />
-              <span className="text-success">All time</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-white/70">
+                <TrendingUp className="h-4 w-4" />
+                <span>All time</span>
+              </div>
+              <Badge className="bg-white/20 text-white border-0">
+                +{stats.totalTrips > 0 ? (stats.totalEarnings / stats.totalTrips).toFixed(0) : '0'} avg
+              </Badge>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="card-enhanced">
+        <Card className="card-enhanced hover-lift gradient-secondary border-0">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Trips</p>
-                <p className="text-3xl font-bold">{stats.totalTrips}</p>
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 rounded-xl bg-white/10">
+                <Car className="h-6 w-6 text-white" />
               </div>
-              <Car className="h-8 w-8 text-primary" />
+              <div className="text-right">
+                <p className="text-sm text-white/80">Total Trips</p>
+                <p className="text-2xl font-bold text-white">{stats.totalTrips}</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2 mt-4 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Completed</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-white/70">
+                <Calendar className="h-4 w-4" />
+                <span>Completed</span>
+              </div>
+              <Badge className="bg-white/20 text-white border-0">
+                +{stats.completedToday} today
+              </Badge>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="card-enhanced">
+        <Card className="card-enhanced hover-lift">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 rounded-xl bg-yellow-100 dark:bg-yellow-900">
+                <Star className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div className="text-right">
                 <p className="text-sm text-muted-foreground">Rating</p>
-                <p className="text-3xl font-bold">{stats.averageRating.toFixed(1)}</p>
+                <p className="text-2xl font-bold">{stats.averageRating.toFixed(1)}</p>
               </div>
-              <Star className="h-8 w-8 text-yellow-500" />
             </div>
-            <div className="flex items-center gap-2 mt-4 text-sm">
-              <Star className="h-4 w-4 fill-current text-yellow-500" />
-              <span className="text-muted-foreground">Average rating</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Star className="h-4 w-4 fill-current text-yellow-500" />
+                <span>Average rating</span>
+              </div>
+              <Badge variant="outline" className="text-yellow-600 border-yellow-200">
+                {stats.averageRating >= 4.5 ? 'Excellent' : stats.averageRating >= 4.0 ? 'Good' : 'Improving'}
+              </Badge>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="card-enhanced">
+        <Card className="card-enhanced hover-lift">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Active Rides</p>
-                <p className="text-3xl font-bold">{stats.activeRides}</p>
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900">
+                <Activity className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <Activity className="h-8 w-8 text-blue-500" />
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Active Rides</p>
+                <p className="text-2xl font-bold">{stats.activeRides}</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2 mt-4 text-sm">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">In progress</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>In progress</span>
+              </div>
+              <Badge variant={stats.activeRides > 0 ? "default" : "secondary"}>
+                {stats.activeRides > 0 ? 'Active' : 'Available'}
+              </Badge>
             </div>
           </CardContent>
         </Card>
