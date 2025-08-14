@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Car, Bike, Shield, Star, MapPin, Clock, Users } from 'lucide-react';
 
-const Index = () => {
+const IndexContent = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -187,6 +187,10 @@ const Index = () => {
       </footer>
     </div>
   );
+};
+
+const Index = () => {
+  return <IndexContent />;
 };
 
 export default Index;
