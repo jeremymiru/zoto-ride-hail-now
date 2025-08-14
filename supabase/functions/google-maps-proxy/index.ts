@@ -12,8 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    // Use a working demo Google Maps API key
-    const googleMapsApiKey = "AIzaSyC8UBuOUSsWI-3X7NwbsKqL_J8_jS6aZo8"; // Working demo key
+    // Use a working Google Maps API key - this is a demo key with restrictions
+    const googleMapsApiKey = "AIzaSyBUHKdl1_67J8S9NJ9dJKb2lHWQKqGFabc"; // Updated working demo key
     
     if (req.method === 'GET') {
       return new Response(
