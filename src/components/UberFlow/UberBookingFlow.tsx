@@ -9,6 +9,7 @@ import { MapPin, Car, Bike, Clock, Navigation, Star, User, Building, Home, Coffe
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import UberLiveMap from '@/components/Map/UberLiveMap';
+import { formatCurrencyDisplay } from '@/lib/currency';
 
 interface Location {
   latitude: number;
@@ -446,7 +447,7 @@ const UberBookingFlow = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-lg">UGX {service.price.toLocaleString()}</div>
+                      <div className="font-bold text-lg">{formatCurrencyDisplay(service.price)}</div>
                       <div className="text-sm text-muted-foreground">{service.time}</div>
                     </div>
                   </Button>
@@ -519,7 +520,7 @@ const UberBookingFlow = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold text-lg">UGX {estimatedFare.toFixed(0)}</div>
+                    <div className="font-bold text-lg">{formatCurrencyDisplay(estimatedFare)}</div>
                   </div>
                 </div>
               </div>

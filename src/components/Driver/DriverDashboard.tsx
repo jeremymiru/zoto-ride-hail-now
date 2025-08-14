@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { formatKSh, formatCurrencyDisplay } from '@/lib/currency';
 import TripAcceptance from './TripAcceptance';
 import UberLiveMap from '@/components/Map/UberLiveMap';
 
@@ -228,7 +229,7 @@ const DriverDashboard = () => {
             </div>
             <div className="flex items-center gap-6">
               <div className="text-right text-white">
-                <div className="text-3xl font-bold mb-1">UGX {stats.todayEarnings.toFixed(0)}</div>
+                <div className="text-3xl font-bold mb-1">{formatCurrencyDisplay(stats.todayEarnings)}</div>
                 <div className="text-white/80 text-base">Today's Earnings</div>
                 <div className="text-white/70 text-sm mt-1">
                   {stats.todayEarnings > 0 ? `+${((stats.todayEarnings / (stats.totalEarnings || 1)) * 100).toFixed(0)}% vs avg` : 'Start earning!'}
@@ -265,7 +266,7 @@ const DriverDashboard = () => {
               </div>
               <div className="text-right">
                 <p className="text-sm text-white/80">Total Earnings</p>
-                <p className="text-2xl font-bold text-white">UGX {stats.totalEarnings.toFixed(0)}</p>
+                <p className="text-2xl font-bold text-white">{formatCurrencyDisplay(stats.totalEarnings)}</p>
               </div>
             </div>
             <div className="flex items-center justify-between">
@@ -274,7 +275,7 @@ const DriverDashboard = () => {
                 <span>All time</span>
               </div>
               <Badge className="bg-white/20 text-white border-0">
-                +{stats.totalTrips > 0 ? (stats.totalEarnings / stats.totalTrips).toFixed(0) : '0'} avg
+                +{stats.totalTrips > 0 ? formatKSh(stats.totalEarnings / stats.totalTrips) : 'KSh 0'} avg
               </Badge>
             </div>
           </CardContent>
@@ -406,7 +407,7 @@ const DriverDashboard = () => {
                             {ride.ride_requests.service_type} Service
                           </div>
                           <div className="text-right">
-                            <div className="text-xl font-bold">UGX {ride.actual_fare.toFixed(0)}</div>
+                            <div className="text-xl font-bold">{formatCurrencyDisplay(ride.actual_fare)}</div>
                             <Badge variant="outline" className="text-xs">
                               Completed
                             </Badge>
@@ -455,7 +456,7 @@ const DriverDashboard = () => {
             <Card className="card-enhanced">
               <CardContent className="p-6 text-center">
                 <DollarSign className="h-12 w-12 text-success mx-auto mb-4" />
-                <div className="text-3xl font-bold">UGX {stats.todayEarnings.toFixed(0)}</div>
+                <div className="text-3xl font-bold">{formatCurrencyDisplay(stats.todayEarnings)}</div>
                 <div className="text-muted-foreground">Today's Earnings</div>
                 <div className="text-sm text-success mt-2">{stats.completedToday} trips completed</div>
               </CardContent>
@@ -464,7 +465,7 @@ const DriverDashboard = () => {
             <Card className="card-enhanced">
               <CardContent className="p-6 text-center">
                 <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
-                <div className="text-3xl font-bold">UGX {(stats.totalEarnings / Math.max(stats.totalTrips, 1)).toFixed(0)}</div>
+                <div className="text-3xl font-bold">{formatCurrencyDisplay(stats.totalEarnings / Math.max(stats.totalTrips, 1))}</div>
                 <div className="text-muted-foreground">Average Per Trip</div>
                 <div className="text-sm text-muted-foreground mt-2">Based on {stats.totalTrips} trips</div>
               </CardContent>
@@ -473,7 +474,7 @@ const DriverDashboard = () => {
             <Card className="card-enhanced">
               <CardContent className="p-6 text-center">
                 <Calendar className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                <div className="text-3xl font-bold">UGX {(stats.totalEarnings * 0.8).toFixed(0)}</div>
+                <div className="text-3xl font-bold">{formatCurrencyDisplay(stats.totalEarnings * 0.8)}</div>
                 <div className="text-muted-foreground">This Month (Est.)</div>
                 <div className="text-sm text-muted-foreground mt-2">Projected earnings</div>
               </CardContent>

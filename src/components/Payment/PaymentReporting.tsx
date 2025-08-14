@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { formatCurrencyDisplay, formatCurrencyDetailed } from '@/lib/currency';
 
 interface RidePayment {
   id: string;
@@ -260,7 +261,7 @@ const PaymentReporting = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Spent</p>
-                <p className="text-3xl font-bold">UGX {stats.totalSpent.toFixed(0)}</p>
+                <p className="text-3xl font-bold">{formatCurrencyDisplay(stats.totalSpent)}</p>
               </div>
               <div className="p-3 rounded-lg bg-primary/10">
                 <DollarSign className="h-8 w-8 text-primary" />
@@ -296,7 +297,7 @@ const PaymentReporting = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Average Fare</p>
-                <p className="text-3xl font-bold">UGX {stats.averageFare.toFixed(0)}</p>
+                <p className="text-3xl font-bold">{formatCurrencyDisplay(stats.averageFare)}</p>
               </div>
               <div className="p-3 rounded-lg bg-yellow-500/10">
                 <Wallet className="h-8 w-8 text-yellow-500" />
@@ -314,7 +315,7 @@ const PaymentReporting = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">This Month</p>
-                <p className="text-3xl font-bold">UGX {stats.thisMonth.toFixed(0)}</p>
+                <p className="text-3xl font-bold">{formatCurrencyDisplay(stats.thisMonth)}</p>
               </div>
               <div className="p-3 rounded-lg bg-green-500/10">
                 <CreditCard className="h-8 w-8 text-green-500" />
@@ -357,7 +358,7 @@ const PaymentReporting = () => {
                         {getServiceName(payment.ride_requests.service_type)}
                       </div>
                       <div className="text-right">
-                        <div className="text-xl font-bold">UGX {payment.actual_fare.toFixed(0)}</div>
+                        <div className="text-xl font-bold">{formatCurrencyDisplay(payment.actual_fare)}</div>
                         <Badge variant="outline" className="text-xs">
                           Completed
                         </Badge>

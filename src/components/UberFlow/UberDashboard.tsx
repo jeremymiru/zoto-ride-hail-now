@@ -23,6 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import UberBookingFlow from './UberBookingFlow';
 import UberLiveMap from '@/components/Map/UberLiveMap';
+import { formatKSh, formatCurrencyDisplay } from '@/lib/currency';
 
 interface RideRequest {
   id: string;
@@ -195,7 +196,7 @@ const UberDashboard = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold">UGX {currentRide.estimated_fare.toFixed(0)}</div>
+                  <div className="text-2xl font-bold">{formatCurrencyDisplay(currentRide.estimated_fare)}</div>
                   <div className="text-sm text-muted-foreground">Estimated fare</div>
                 </div>
               </div>
@@ -396,7 +397,7 @@ const UberDashboard = () => {
                   <div className="text-right">
                     <p className="text-sm text-white/80">Total Spent</p>
                     <p className="text-2xl font-bold text-white">
-                      UGX {rides.reduce((sum, ride) => sum + (ride.actual_fare || 0), 0).toFixed(0)}
+                      {formatCurrencyDisplay(rides.reduce((sum, ride) => sum + (ride.actual_fare || 0), 0))}
                     </p>
                   </div>
                 </div>
@@ -460,7 +461,7 @@ const UberDashboard = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold">UGX {request.estimated_fare.toFixed(0)}</div>
+                        <div className="font-bold">{formatCurrencyDisplay(request.estimated_fare)}</div>
                         <div className="text-sm text-muted-foreground capitalize">
                           {request.service_type === 'car' ? 'Car' : 'Boda'}
                         </div>

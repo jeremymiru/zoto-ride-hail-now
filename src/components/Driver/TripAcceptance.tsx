@@ -21,6 +21,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import UberLiveMap from '@/components/Map/UberLiveMap';
+import { formatCurrencyDisplay } from '@/lib/currency';
 
 interface RideRequest {
   id: string;
@@ -285,7 +286,7 @@ const TripAcceptance = () => {
                   <div className="flex items-center justify-center mb-2">
                     <DollarSign className="h-5 w-5" />
                   </div>
-                  <div className="font-semibold">UGX {selectedRequest.estimated_fare.toFixed(0)}</div>
+                  <div className="font-semibold">{formatCurrencyDisplay(selectedRequest.estimated_fare)}</div>
                   <div className="text-sm text-muted-foreground">Estimated Fare</div>
                 </CardContent>
               </Card>
@@ -409,7 +410,7 @@ const TripAcceptance = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold">UGX {request.estimated_fare.toFixed(0)}</div>
+                        <div className="text-2xl font-bold">{formatCurrencyDisplay(request.estimated_fare)}</div>
                         <div className="text-sm text-muted-foreground">{calculateDistance(request)} km</div>
                       </div>
                     </div>

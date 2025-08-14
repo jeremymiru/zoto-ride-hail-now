@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { formatCurrencyDisplay } from '@/lib/currency';
 import UberLiveMap from '@/components/Map/UberLiveMap';
 
 interface ActiveRide {
@@ -346,7 +347,7 @@ const RiderNavigation = () => {
           <div className="grid grid-cols-2 gap-4 pt-4">
             <div className="text-center p-3 border rounded-lg">
               <div className="text-2xl font-bold">
-                UGX {(activeRide.actual_fare || activeRide.ride_requests.estimated_fare).toFixed(0)}
+                {formatCurrencyDisplay(activeRide.actual_fare || activeRide.ride_requests.estimated_fare)}
               </div>
               <div className="text-sm text-muted-foreground">
                 {activeRide.actual_fare ? 'Final Fare' : 'Estimated'}

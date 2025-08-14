@@ -13,6 +13,7 @@ import { MapPin, Car, Bike, Navigation, DollarSign } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import UberLiveMap from '@/components/Map/UberLiveMap';
+import { formatCurrencyDisplay } from '@/lib/currency';
 
 interface RideRequestFormProps {
   onRequestCreated?: () => void;
@@ -211,7 +212,7 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
                   <Car className="h-8 w-8" />
                   <div className="text-center">
                     <div className="font-semibold">Car Service</div>
-                    <Badge variant="secondary" className="text-xs mt-1">UGX 2,500/km</Badge>
+                    <Badge variant="secondary" className="text-xs mt-1">KSh 2,500/km</Badge>
                   </div>
                 </Button>
                 <Button
@@ -225,7 +226,7 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
                   <Bike className="h-8 w-8" />
                   <div className="text-center">
                     <div className="font-semibold">Boda-Boda</div>
-                    <Badge variant="secondary" className="text-xs mt-1">UGX 1,500/km</Badge>
+                    <Badge variant="secondary" className="text-xs mt-1">KSh 1,500/km</Badge>
                   </div>
                 </Button>
               </div>
@@ -318,7 +319,7 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
                       Estimated Fare
                     </span>
                     <span className="text-2xl font-bold gradient-primary bg-clip-text text-transparent">
-                      UGX {estimatedFare.toFixed(0)}
+                      {formatCurrencyDisplay(estimatedFare)}
                     </span>
                   </div>
                 </CardContent>
