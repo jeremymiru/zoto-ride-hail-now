@@ -1,20 +1,18 @@
 import { useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Car, Bike, Shield, Star, MapPin, Clock, Users } from 'lucide-react';
 
-const IndexContent = () => {
+const Index = () => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user && !loading) {
-      navigate('/dashboard');
-    }
-  }, [user, loading, navigate]);
+  // If user is authenticated, redirect to dashboard
+  if (user && !loading) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   if (loading) {
     return (
@@ -187,10 +185,6 @@ const IndexContent = () => {
       </footer>
     </div>
   );
-};
-
-const Index = () => {
-  return <IndexContent />;
 };
 
 export default Index;
