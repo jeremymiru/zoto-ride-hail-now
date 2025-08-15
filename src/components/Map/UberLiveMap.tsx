@@ -5,8 +5,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Navigation, MapPin, Clock, Car, Bike } from 'lucide-react';
+import { Navigation, MapPin, Clock, Car, Bike, PlayCircle, StopCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { mockDataService } from '@/services/mockData';
 
 declare global {
   interface Window {
@@ -33,13 +34,15 @@ interface UberLiveMapProps {
   showDrivers?: boolean;
   trackingMode?: 'driver' | 'rider';
   rideId?: string;
+  enableMockData?: boolean;
 }
 
 const UberLiveMap: React.FC<UberLiveMapProps> = ({ 
   className = '', 
   showDrivers = true, 
   trackingMode = 'rider',
-  rideId 
+  rideId,
+  enableMockData = true
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
@@ -55,6 +58,7 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
   const [nearbyDrivers, setNearbyDrivers] = useState<LiveLocation[]>([]);
   const [isTracking, setIsTracking] = useState(false);
   const [eta, setEta] = useState<string>('');
+  const [isMockDataActive, setIsMockDataActive] = useState(false);
 
   // Initialize Google Maps
   useEffect(() => {
@@ -156,6 +160,8 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
       if (watchIdRef.current) {
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
+      // Cleanup mock data when component unmounts
+      mockDataService.stopMockData();
     };
   }, [toast]);
 
@@ -377,6 +383,25 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
     });
   };
 
+  // Mock data controls
+  const toggleMockData = () => {
+    if (isMockDataActive) {
+      mockDataService.stopMockData();
+      setIsMockDataActive(false);
+      toast({
+        title: "Mock Data Stopped",
+        description: "Demo mode disabled",
+      });
+    } else {
+      mockDataService.startMockData(true, false);
+      setIsMockDataActive(true);
+      toast({
+        title: "Mock Data Started",
+        description: "Demo mode active with simulated drivers",
+      });
+    }
+  };
+
   if (!isMapLoaded) {
     return (
       <div className={`flex items-center justify-center h-96 bg-muted rounded-lg ${className}`}>
@@ -408,6 +433,18 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
           <Navigation className="h-4 w-4 mr-2" />
           {isTracking ? 'Stop Tracking' : 'Start Tracking'}
         </Button>
+        
+        {enableMockData && (
+          <Button
+            onClick={toggleMockData}
+            size="sm"
+            variant={isMockDataActive ? "destructive" : "secondary"}
+            className="shadow-card"
+          >
+            {isMockDataActive ? <StopCircle className="h-4 w-4 mr-2" /> : <PlayCircle className="h-4 w-4 mr-2" />}
+            {isMockDataActive ? 'Stop Demo' : 'Start Demo'}
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
@@ -436,14 +473,19 @@ const UberLiveMap: React.FC<UberLiveMapProps> = ({
         </Card>
       </div>
 
-      {/* Status indicator */}
-      {isTracking && (
-        <div className="absolute top-4 left-4">
+      {/* Status indicators */}
+      <div className="absolute top-4 left-4 space-y-2">
+        {isTracking && (
           <Badge variant="default" className="bg-accent text-accent-foreground animate-pulse">
             Live Tracking Active
           </Badge>
-        </div>
-      )}
+        )}
+        {isMockDataActive && (
+          <Badge variant="secondary" className="bg-orange-500 text-white">
+            Demo Mode Active
+          </Badge>
+        )}
+      </div>
     </div>
   );
 };

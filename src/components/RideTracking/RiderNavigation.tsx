@@ -22,6 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { formatCurrencyDisplay } from '@/lib/currency';
 import UberLiveMap from '@/components/Map/UberLiveMap';
+import { mockDataService, type MockActiveRide } from '@/services/mockData';
 
 interface ActiveRide {
   id: string;
@@ -58,6 +59,7 @@ const RiderNavigation = () => {
   const [activeRide, setActiveRide] = useState<ActiveRide | null>(null);
   const [loading, setLoading] = useState(true);
   const [driverLocation, setDriverLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [useMockData, setUseMockData] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -65,6 +67,24 @@ const RiderNavigation = () => {
       subscribeToRideUpdates();
     }
   }, [user]);
+
+  // Load mock data if no real ride is found
+  useEffect(() => {
+    if (!loading && !activeRide && !useMockData) {
+      const mockRide = mockDataService.getMockActiveRide();
+      setActiveRide({
+        ...mockRide,
+        driver_profile: mockRide.driver_profile
+      } as ActiveRide);
+      setUseMockData(true);
+      
+      toast({
+        title: "Demo Mode",
+        description: "Showing mock ride data for demonstration",
+        variant: "default"
+      });
+    }
+  }, [loading, activeRide, useMockData]);
 
   const fetchActiveRide = async () => {
     try {
@@ -231,9 +251,27 @@ const RiderNavigation = () => {
             <Navigation className="h-16 w-16 text-muted-foreground mx-auto" />
           </div>
           <h3 className="text-2xl font-bold text-muted-foreground mb-2">No active ride</h3>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             You don't have any active rides at the moment
           </p>
+          <Button 
+            onClick={() => {
+              const mockRide = mockDataService.getMockActiveRide();
+              setActiveRide({
+                ...mockRide,
+                driver_profile: mockRide.driver_profile
+              } as ActiveRide);
+              setUseMockData(true);
+              mockDataService.startMockData(true, true);
+              toast({
+                title: "Demo Mode Started",
+                description: "Showing mock ride data with live updates",
+              });
+            }}
+            variant="outline"
+          >
+            Load Demo Ride
+          </Button>
         </CardContent>
       </Card>
     );
@@ -251,13 +289,20 @@ const RiderNavigation = () => {
               <div className="flex items-center gap-3 mb-2">
                 <div className={`w-3 h-3 rounded-full ${statusInfo.color} animate-pulse`}></div>
                 <h1 className="text-2xl font-bold">{statusInfo.label}</h1>
+                {useMockData && (
+                  <Badge variant="secondary" className="ml-2 bg-orange-500 text-white">
+                    Demo
+                  </Badge>
+                )}
               </div>
               <p className="text-muted-foreground">{statusInfo.description}</p>
             </div>
-            <Badge className="bg-primary text-primary-foreground">
-              <Navigation className="h-4 w-4 mr-2" />
-              Live Tracking
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-primary text-primary-foreground">
+                <Navigation className="h-4 w-4 mr-2" />
+                Live Tracking
+              </Badge>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -380,6 +425,7 @@ const RiderNavigation = () => {
             trackingMode="rider"
             rideId={activeRide.id}
             className="h-[400px] rounded-lg"
+            enableMockData={useMockData}
           />
         </CardContent>
       </Card>
