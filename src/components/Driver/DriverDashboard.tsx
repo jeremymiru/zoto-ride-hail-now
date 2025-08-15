@@ -373,7 +373,28 @@ const DriverDashboard = () => {
 
         {/* Available Trips Tab */}
         <TabsContent value="trips">
-          <TripAcceptance />
+          <div className="space-y-6">
+            {/* Driver Navigation with Live Map */}
+            <Card className="card-enhanced">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Navigation className="h-5 w-5" />
+                  Driver Navigation
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <UberLiveMap
+                  showDrivers={true}
+                  trackingMode="driver"
+                  className="h-[400px] rounded-lg mb-4"
+                  enableMockData={true}
+                />
+              </CardContent>
+            </Card>
+            
+            {/* Available Trip Requests */}
+            <TripAcceptance />
+          </div>
         </TabsContent>
 
         {/* History Tab */}
