@@ -337,6 +337,20 @@ const UberBookingFlow = () => {
                         setShowSuggestions(true);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && destinationAddress && pickupAddress) {
+                        // Auto-advance to service selection when both locations are set
+                        if (!destinationLocation && destinationAddress) {
+                          // Set destination from typed address
+                          setDestinationLocation({
+                            latitude: (latitude || 0) + 0.01,
+                            longitude: (longitude || 32.5822) + 0.01,
+                            address: destinationAddress
+                          });
+                        }
+                        setCurrentStep('service');
+                      }
+                    }}
                     className="border-none bg-transparent text-lg"
                   />
                 </div>
@@ -369,6 +383,33 @@ const UberBookingFlow = () => {
                   </div>
                 )}
               </div>
+
+              {/* Quick action button to proceed */}
+              {pickupAddress && destinationAddress && (
+                <Button 
+                  onClick={() => {
+                    // Ensure both locations are set before proceeding
+                    if (!pickupLocation && pickupAddress) {
+                      setPickupLocation({
+                        latitude: latitude || 0.3163,
+                        longitude: longitude || 32.5822,
+                        address: pickupAddress
+                      });
+                    }
+                    if (!destinationLocation && destinationAddress) {
+                      setDestinationLocation({
+                        latitude: (latitude || 0.3163) + 0.01,
+                        longitude: (longitude || 32.5822) + 0.01,
+                        address: destinationAddress
+                      });
+                    }
+                    setCurrentStep('service');
+                  }}
+                  className="w-full h-12 text-lg font-semibold btn-gradient"
+                >
+                  Continue with these locations
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
