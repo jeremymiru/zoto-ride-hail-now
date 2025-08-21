@@ -5,6 +5,7 @@ import { useDriverMatching } from '@/hooks/useDriverMatching';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import LocationSearchInput from '@/components/UberFlow/LocationSearchInput';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -235,64 +236,33 @@ const RideRequestForm = ({ onRequestCreated }: RideRequestFormProps) => {
             {/* Pickup Location */}
             <div className="space-y-3">
               <Label>Pickup Location</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter pickup address"
-                  value={pickupAddress}
-                  onChange={(e) => setPickupAddress(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handlePickupAddressSet()}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={useCurrentLocation}
-                  disabled={locationLoading}
-                >
-                  <Navigation className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePickupAddressSet}
-                  disabled={!pickupAddress.trim()}
-                >
-                  Set
-                </Button>
-              </div>
-              {pickupLocation && (
-                <Badge variant="outline" className="w-fit">
-                  <MapPin className="h-3 w-3 mr-1" />
-                  Pickup: {pickupLocation.address}
-                </Badge>
-              )}
+              <LocationSearchInput
+                placeholder="Search pickup location..."
+                value={pickupAddress}
+                onChange={setPickupAddress}
+                onLocationSelect={(location) => {
+                  setPickupLocation(location);
+                  setPickupAddress(location.address);
+                }}
+                selectedLocation={pickupLocation}
+                showCurrentLocation={true}
+              />
             </div>
 
             {/* Destination Location */}
             <div className="space-y-3">
               <Label>Destination</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter destination address"
-                  value={destinationAddress}
-                  onChange={(e) => setDestinationAddress(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleDestinationAddressSet()}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleDestinationAddressSet}
-                  disabled={!destinationAddress.trim()}
-                >
-                  Set
-                </Button>
-              </div>
-              {destinationLocation && (
-                <Badge variant="outline" className="w-fit">
-                  <MapPin className="h-3 w-3 mr-1" />
-                  Destination: {destinationLocation.address}
-                </Badge>
-              )}
+              <LocationSearchInput
+                placeholder="Search destination..."
+                value={destinationAddress}
+                onChange={setDestinationAddress}
+                onLocationSelect={(location) => {
+                  setDestinationLocation(location);
+                  setDestinationAddress(location.address);
+                }}
+                selectedLocation={destinationLocation}
+                showCurrentLocation={false}
+              />
             </div>
 
             {/* Additional Notes */}

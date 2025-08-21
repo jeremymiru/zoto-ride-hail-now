@@ -60,7 +60,11 @@ const Layout = ({ children }: LayoutProps) => {
 
           {user && profile && (
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => navigate('/settings')}
+              >
                 <Bell className="h-5 w-5" />
               </Button>
               

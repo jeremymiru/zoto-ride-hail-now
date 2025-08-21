@@ -14,6 +14,8 @@ interface Profile {
   rating: number;
   total_rides: number;
   is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface AuthContextType {
